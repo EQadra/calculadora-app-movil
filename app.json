@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "my-app",
+    "slug": "my-app",
+    "owner": "ecuadra",
+    "scheme": "acme",
+    "userInterfaceStyle": "automatic",
+    "orientation": "default",
+    "version": "1.0.0",
+    "android": {
+      "package": "com.ecuadra.myapp",
+      "versionCode": 1,
+      "permissions": []
+    },
+    "web": {
+      "output": "static"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://n"
+        }
+      ]
+    ],
+    "extra": {
+      "router": {
+        "origin": "https://n"
+      },
+      "eas": {
+        "projectId": "c31f62a0-8226-42e4-8bd3-792a79192183"
+      }
+    }
+  }
+}
