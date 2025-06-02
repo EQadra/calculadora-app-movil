@@ -1,18 +1,19 @@
 {
   "cli": {
-    "version": ">= 3.0.0"
+    "version": ">= 3.0.0",
+    "appVersionSource": "local"
   },
   "build": {
     "preview": {
-      "distribution": "internal",         // Para builds que puedes instalar directamente (no para Play Store)
+      "distribution": "internal",        
       "android": {
-        "buildType": "apk"               // APK directo para pruebas
+        "buildType": "apk"              
       }
     },
     "production": {
-      "distribution": "store",           // Para publicar en Play Store
+      "distribution": "store",           
       "android": {
-        "buildType": "app-bundle"        // AAB requerido por Google Play
+        "buildType": "app-bundle"       
       }
     }
   },

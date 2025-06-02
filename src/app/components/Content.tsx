@@ -61,17 +61,20 @@ export default function Content({ darkMode }: Props) {
         return;
       }
     
-      const MAC_ADDRESS = "86-67-7a-28-57-f2";
+      const MAC_ADDRESS = "DC:OD:51:40:B7:AB"; // Asegúrate que es el formato correcto
       setIsScanning(true);
     
       try {
         if (Platform.OS === "android") {
           const granted = await PermissionsAndroid.requestMultiple([
             PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+            PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
             PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
           ]);
+    
           if (
             granted["android.permission.BLUETOOTH_CONNECT"] !== PermissionsAndroid.RESULTS.GRANTED ||
+            granted["android.permission.BLUETOOTH_SCAN"] !== PermissionsAndroid.RESULTS.GRANTED ||
             granted["android.permission.ACCESS_FINE_LOCATION"] !== PermissionsAndroid.RESULTS.GRANTED
           ) {
             Alert.alert("Permisos denegados", "Se requieren permisos de Bluetooth y ubicación.");
@@ -84,45 +87,54 @@ export default function Content({ darkMode }: Props) {
         await device.discoverAllServicesAndCharacteristics();
     
         const services = await device.services();
+    
+        let writableCharacteristic = null;
         for (const service of services) {
           const characteristics = await service.characteristics();
           for (const characteristic of characteristics) {
-            if (characteristic.isWritableWithoutResponse) {
-              const recibo =
-                `
-                BMG Imports
-                                           
-                Av. Siempre Viva 340
-                Tel: 921 363 786
-
-                --------------------------------------------------------                
-                Cantidad de gramos: ${grams}
-                --------------------------------------------------------                
-                Precio por gramo (USD): ${formatNumber(pricePerGramUSD)}
-                Precio por gramo (PEN): ${formatNumber(pricePerGramPEN)}
-                --------------------------------------------------------                
-                Total en USD: ${formatNumber(totalUSD)}
-                Total en PEN: ${formatNumber(totalPEN)}
-                --------------------------------------------------------            
-                Gracias por su compra... :)
-                --------------------------------------------------------
-                `;    
-              const data = Buffer.from(recibo, "utf-8").toString("base64");
-              await characteristic.writeWithoutResponse(data);
-              Alert.alert("Éxito", "Recibo impreso correctamente...vuelva pronto");
-              setIsScanning(false);
-              return;
+            if (characteristic.isWritableWithResponse || characteristic.isWritableWithoutResponse) {
+              writableCharacteristic = characteristic;
+              break;
             }
           }
+          if (writableCharacteristic) break;
         }
     
-        Alert.alert("Error", "No se encontró una característica escribible.");
-        setIsScanning(false);
+        if (!writableCharacteristic) {
+          Alert.alert("Error", "No se encontró una característica escribible.");
+          setIsScanning(false);
+          return;
+        }
+    
+        const recibo =
+          `BMG Imports\n` +
+          `Av. Siempre Viva 340\n` +
+          `Tel: 921 363 786\n` +
+          `----------------------------------------\n` +
+          `Cantidad de gramos: ${grams}\n` +
+          `Precio por gramo (USD): ${formatNumber(pricePerGramUSD)}\n` +
+          `Precio por gramo (PEN): ${formatNumber(pricePerGramPEN)}\n` +
+          `----------------------------------------\n` +
+          `Total en USD: ${formatNumber(totalUSD)}\n` +
+          `Total en PEN: ${formatNumber(totalPEN)}\n` +
+          `----------------------------------------\n` +
+          `Gracias por su compra... :)\n` +
+          `----------------------------------------\n`;
+          
+          const data = Buffer.from(recibo, "utf-8");
+          await writableCharacteristic.writeWithResponse(data.toString("base64")); // si y solo si la impresora requiere base64, lo cual es raro
+          
+    
+        Alert.alert("Éxito", "Recibo impreso correctamente...vuelva pronto");
+    
+        await manager.cancelDeviceConnection(device.id);
       } catch (error: any) {
         Alert.alert("Error", error.message || "Falló la impresión");
+      } finally {
         setIsScanning(false);
       }
     }
+    
     
 
   function clearAll() {
