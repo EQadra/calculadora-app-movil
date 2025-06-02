@@ -1,60 +1,27 @@
-// Content.tsx
-
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   Modal,
-  TextInput,
-  Image,
-  StyleSheet,
-  Alert,
   PermissionsAndroid,
   Platform,
+  Alert,
+  StyleSheet,
+  ActivityIndicator,
 } from "react-native";
+
+import InputField from "./InputField";
+import BrandCarousel from "./BrandCarousel";
+
 import { BleManager } from "react-native-ble-plx";
 import { Buffer } from "buffer";
-
 const manager = new BleManager();
 
-type Props = { darkMode: boolean };
 
-function InputField({
-  label,
-  value,
-  setValue,
-  placeholder,
-  darkMode,
-}: {
-  label: string;
-  value: string;
-  setValue: (val: string) => void;
-  placeholder: string;
-  darkMode: boolean;
-}) {
-  return (
-    <View style={{ marginBottom: 12 }}>
-      <Text style={{ color: darkMode ? "white" : "black", marginBottom: 4 }}>
-        {label}
-      </Text>
-      <TextInput
-        value={value}
-        onChangeText={setValue}
-        placeholder={placeholder}
-        placeholderTextColor={darkMode ? "#ccc" : "#555"}
-        keyboardType="decimal-pad"
-        style={{
-          backgroundColor: darkMode ? "#222" : "white",
-          color: darkMode ? "white" : "black",
-          padding: 10,
-          borderRadius: 8,
-        }}
-      />
-    </View>
-  );
-}
+
+type Props = { darkMode: boolean };
 
 export default function Content({ darkMode }: Props) {
   const [pricePerOz, setPricePerOz] = useState("");
@@ -63,6 +30,9 @@ export default function Content({ darkMode }: Props) {
   const [grams, setGrams] = useState("");
   const [discountPercentage, setDiscountPercentage] = useState("");
   const [showModal, setShowModal] = useState(false);
+
+  // Nuevo estado para control de escaneo/imprimiendo
+  const [isScanning, setIsScanning] = useState(false);
 
   const parse = (val: string) => parseFloat(val.replace(",", ".")) || 0;
 
@@ -86,6 +56,13 @@ export default function Content({ darkMode }: Props) {
     });
 
   async function imprimirRecibo() {
+    if (!canCalculate || grams.trim() === "") {
+      Alert.alert("Datos incompletos", "Por favor completa todos los campos antes de imprimir.");
+      return;
+    }
+    if (isScanning) return; // evitar escanear de nuevo si ya está escaneando
+    setIsScanning(true);
+
     try {
       if (Platform.OS === "android") {
         const granted = await PermissionsAndroid.requestMultiple([
@@ -94,29 +71,31 @@ export default function Content({ darkMode }: Props) {
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         ]);
         if (
-          granted["android.permission.BLUETOOTH_SCAN"] !==
-            PermissionsAndroid.RESULTS.GRANTED ||
-          granted["android.permission.BLUETOOTH_CONNECT"] !==
-            PermissionsAndroid.RESULTS.GRANTED ||
-          granted["android.permission.ACCESS_FINE_LOCATION"] !==
-            PermissionsAndroid.RESULTS.GRANTED
+          granted["android.permission.BLUETOOTH_SCAN"] !== PermissionsAndroid.RESULTS.GRANTED ||
+          granted["android.permission.BLUETOOTH_CONNECT"] !== PermissionsAndroid.RESULTS.GRANTED ||
+          granted["android.permission.ACCESS_FINE_LOCATION"] !== PermissionsAndroid.RESULTS.GRANTED
         ) {
           Alert.alert(
             "Permisos denegados",
             "Se requieren permisos de Bluetooth y ubicación."
           );
+          setIsScanning(false);
           return;
         }
       }
 
+      let timeoutId: NodeJS.Timeout | null = null;
+
       manager.startDeviceScan(null, null, async (error, device) => {
         if (error) {
           Alert.alert("Error de escaneo", error.message);
+          setIsScanning(false);
           return;
         }
 
-        if (device && device.name && device.name.includes("Printer")) {
+        if (device?.name?.includes("Printer")) {
           manager.stopDeviceScan();
+          if (timeoutId) clearTimeout(timeoutId);
 
           try {
             const connectedDevice = await device.connect();
@@ -127,37 +106,46 @@ export default function Content({ darkMode }: Props) {
               const characteristics = await service.characteristics();
               for (const characteristic of characteristics) {
                 if (characteristic.isWritableWithoutResponse) {
-                  const recibo = `
-                    BMG Imports 
-                    Av. Siempre Viva 340.
-                    Teléfono:  921 363 786 
-                    cantidad de Gramos :   ${grams} 
-                    Precio por gramo (USD): ${formatNumber(pricePerGramUSD)}
-                    Precio por gramo (PEN): ${formatNumber(pricePerGramPEN)}
-                    Total en USD: ${formatNumber(totalUSD)}
-                    Total en PEN: ${formatNumber(totalPEN)}
-                    `;
+                  const recibo = 
+`BMG Imports
+Av. Siempre Viva 340
+Tel: 921 363 786
+
+Cantidad de gramos: ${grams}
+Precio por gramo (USD): ${formatNumber(pricePerGramUSD)}
+Precio por gramo (PEN): ${formatNumber(pricePerGramPEN)}
+Total en USD: ${formatNumber(totalUSD)}
+Total en PEN: ${formatNumber(totalPEN)}
+
+Gracias por su compra.
+`;
 
                   const data = Buffer.from(recibo, "utf-8").toString("base64");
                   await characteristic.writeWithoutResponse(data);
                   Alert.alert("Éxito", "Recibo impreso correctamente.");
+                  setIsScanning(false);
                   return;
                 }
               }
             }
 
             Alert.alert("Error", "No se encontró una característica escribible.");
-          } catch (connError) {
+            setIsScanning(false);
+          } catch (connError: any) {
             Alert.alert("Error de conexión", connError.message);
+            setIsScanning(false);
           }
         }
       });
 
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         manager.stopDeviceScan();
+        Alert.alert("Tiempo agotado", "No se encontró la impresora.");
+        setIsScanning(false);
       }, 10000);
-    } catch (error) {
+    } catch (error: any) {
       Alert.alert("Error", error.message || "Falló la impresión");
+      setIsScanning(false);
     }
   }
 
@@ -170,14 +158,7 @@ export default function Content({ darkMode }: Props) {
   }
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: darkMode ? "black" : "#cce4ff",
-        paddingHorizontal: 16,
-        paddingTop: 24,
-      }}
-    >
+    <View style={{ flex: 1, backgroundColor: darkMode ? "black" : "#cce4ff", padding: 16 }}>
       <ScrollView keyboardShouldPersistTaps="handled">
         <Text
           style={{
@@ -238,14 +219,10 @@ export default function Content({ darkMode }: Props) {
               marginTop: 6,
             }}
           >
-            <Text
-              style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}
-            >
+            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Precio por gramo (USD): {formatNumber(pricePerGramUSD)}
             </Text>
-            <Text
-              style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}
-            >
+            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Precio por gramo (PEN): {formatNumber(pricePerGramPEN)}
             </Text>
             <Text style={{ color: darkMode ? "white" : "black" }}>
@@ -254,13 +231,7 @@ export default function Content({ darkMode }: Props) {
           </View>
         )}
 
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            marginTop: 12,
-          }}
-        >
+        <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 12 }}>
           <TouchableOpacity
             onPress={clearAll}
             style={{
@@ -270,12 +241,9 @@ export default function Content({ darkMode }: Props) {
               borderRadius: 8,
               marginRight: 8,
             }}
+            disabled={isScanning}
           >
-            <Text
-              style={{ color: "white", textAlign: "center", fontWeight: "600" }}
-            >
-              Limpiar
-            </Text>
+            <Text style={{ color: "white", textAlign: "center", fontWeight: "600" }}>Limpiar</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -287,29 +255,26 @@ export default function Content({ darkMode }: Props) {
               borderRadius: 8,
               marginLeft: 8,
             }}
+            disabled={isScanning}
           >
-            <Text
-              style={{ color: "white", textAlign: "center", fontWeight: "600" }}
-            >
-              Ver Recibo
-            </Text>
+            <Text style={{ color: "white", textAlign: "center", fontWeight: "600" }}>Ver Recibo</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Indicador de carga */}
+        {isScanning && (
+          <View style={{ marginTop: 20, alignItems: "center" }}>
+            <ActivityIndicator size="large" color="#0275d8" />
+            <Text style={{ marginTop: 8, color: darkMode ? "white" : "black" }}>
+              Escaneando impresora e imprimiendo...
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
-      <Modal
-        visible={showModal}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setShowModal(false)}
-      >
+      <Modal visible={showModal} animationType="slide" transparent onRequestClose={() => setShowModal(false)}>
         <View style={styles.modalContainer}>
-          <View
-            style={[
-              styles.modalContent,
-              { backgroundColor: darkMode ? "#111" : "white" },
-            ]}
-          >
+          <View style={[styles.modalContent, { backgroundColor: darkMode ? "#111" : "white" }]}>
             <Text
               style={{
                 fontSize: 22,
@@ -321,25 +286,16 @@ export default function Content({ darkMode }: Props) {
             >
               🧾 Recibo de Cálculo
             </Text>
-
-            <Text
-              style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}
-            >
+            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Precio por gramo (USD): {formatNumber(pricePerGramUSD)}
             </Text>
-            <Text
-              style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}
-            >
+            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Precio por gramo (PEN): {formatNumber(pricePerGramPEN)}
             </Text>
-            <Text
-              style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}
-            >
+            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Total en USD: {formatNumber(totalUSD)}
             </Text>
-            <Text
-              style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}
-            >
+            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Total en PEN: {formatNumber(totalPEN)}
             </Text>
 
@@ -347,16 +303,16 @@ export default function Content({ darkMode }: Props) {
               <TouchableOpacity
                 onPress={() => setShowModal(false)}
                 style={[styles.button, { backgroundColor: "#555" }]}
+                disabled={isScanning}
               >
                 <Text style={styles.buttonText}>Cerrar</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={imprimirRecibo}
                 style={[styles.button, { backgroundColor: "#83a4d4" }]}
+                disabled={isScanning}
               >
-                <Text style={[styles.buttonText, { color: "black" }]}>
-                  Imprimir
-                </Text>
+                <Text style={[styles.buttonText, { color: "black" }]}>Imprimir</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -366,78 +322,31 @@ export default function Content({ darkMode }: Props) {
   );
 }
 
-function BrandCarousel(): JSX.Element {
-  const scrollRef = useRef<ScrollView>(null);
-  const scrollX = useRef(0);
-
-  const brandImages = [
-    "https://picsum.photos/seed/1/100",
-    "https://picsum.photos/seed/2/100",
-    "https://picsum.photos/seed/3/100",
-    "https://picsum.photos/seed/4/100",
-    "https://picsum.photos/seed/5/100",
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!scrollRef.current) return;
-      scrollX.current += 110;
-      const maxScroll = brandImages.length * 110;
-      if (scrollX.current > maxScroll) {
-        scrollX.current = 0;
-      }
-      scrollRef.current.scrollTo({ x: scrollX.current, animated: true });
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <View style={{ marginBottom: 16 }}>
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        scrollEnabled={false}
-      >
-        {brandImages.map((uri, index) => (
-          <Image key={index} source={{ uri }} style={styles.image} />
-        ))}
-      </ScrollView>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  image: {
-    width: 80,
-    height: 80,
-    marginHorizontal: 8,
-    borderRadius: 8,
-  },
   modalContainer: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
-    padding: 20,
+    alignItems: "center",
+    padding: 16,
   },
   modalContent: {
-    borderRadius: 12,
-    padding: 20,
+    width: "100%",
+    borderRadius: 10,
+    padding: 24,
   },
   modalButtonRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
+    justifyContent: "space-around",
+    marginTop: 16,
   },
   button: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginHorizontal: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 6,
   },
   buttonText: {
     color: "white",
-    textAlign: "center",
-    fontWeight: "600",
+    fontWeight: "bold",
   },
 });
