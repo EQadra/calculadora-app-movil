@@ -55,99 +55,75 @@ export default function Content({ darkMode }: Props) {
       maximumFractionDigits: 2,
     });
 
-  async function imprimirRecibo() {
-    if (!canCalculate || grams.trim() === "") {
-      Alert.alert("Datos incompletos", "Por favor completa todos los campos antes de imprimir.");
-      return;
-    }
-    if (isScanning) return; // evitar escanear de nuevo si ya está escaneando
-    setIsScanning(true);
-
-    try {
-      if (Platform.OS === "android") {
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        ]);
-        if (
-          granted["android.permission.BLUETOOTH_SCAN"] !== PermissionsAndroid.RESULTS.GRANTED ||
-          granted["android.permission.BLUETOOTH_CONNECT"] !== PermissionsAndroid.RESULTS.GRANTED ||
-          granted["android.permission.ACCESS_FINE_LOCATION"] !== PermissionsAndroid.RESULTS.GRANTED
-        ) {
-          Alert.alert(
-            "Permisos denegados",
-            "Se requieren permisos de Bluetooth y ubicación."
-          );
-          setIsScanning(false);
-          return;
-        }
+    async function imprimirRecibo() {
+      if (!canCalculate || grams.trim() === "") {
+        Alert.alert("Datos incompletos", "Por favor completa todos los campos antes de imprimir.");
+        return;
       }
-
-      let timeoutId: NodeJS.Timeout | null = null;
-
-      manager.startDeviceScan(null, null, async (error, device) => {
-        if (error) {
-          Alert.alert("Error de escaneo", error.message);
-          setIsScanning(false);
-          return;
-        }
-
-        if (device?.name?.includes("Printer")) {
-          manager.stopDeviceScan();
-          if (timeoutId) clearTimeout(timeoutId);
-
-          try {
-            const connectedDevice = await device.connect();
-            await connectedDevice.discoverAllServicesAndCharacteristics();
-
-            const services = await connectedDevice.services();
-            for (const service of services) {
-              const characteristics = await service.characteristics();
-              for (const characteristic of characteristics) {
-                if (characteristic.isWritableWithoutResponse) {
-                  const recibo = 
-`BMG Imports
-Av. Siempre Viva 340
-Tel: 921 363 786
-
-Cantidad de gramos: ${grams}
-Precio por gramo (USD): ${formatNumber(pricePerGramUSD)}
-Precio por gramo (PEN): ${formatNumber(pricePerGramPEN)}
-Total en USD: ${formatNumber(totalUSD)}
-Total en PEN: ${formatNumber(totalPEN)}
-
-Gracias por su compra.
-`;
-
-                  const data = Buffer.from(recibo, "utf-8").toString("base64");
-                  await characteristic.writeWithoutResponse(data);
-                  Alert.alert("Éxito", "Recibo impreso correctamente.");
-                  setIsScanning(false);
-                  return;
-                }
-              }
-            }
-
-            Alert.alert("Error", "No se encontró una característica escribible.");
+    
+      const MAC_ADDRESS = "86-67-7a-28-57-f2";
+      setIsScanning(true);
+    
+      try {
+        if (Platform.OS === "android") {
+          const granted = await PermissionsAndroid.requestMultiple([
+            PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          ]);
+          if (
+            granted["android.permission.BLUETOOTH_CONNECT"] !== PermissionsAndroid.RESULTS.GRANTED ||
+            granted["android.permission.ACCESS_FINE_LOCATION"] !== PermissionsAndroid.RESULTS.GRANTED
+          ) {
+            Alert.alert("Permisos denegados", "Se requieren permisos de Bluetooth y ubicación.");
             setIsScanning(false);
-          } catch (connError: any) {
-            Alert.alert("Error de conexión", connError.message);
-            setIsScanning(false);
+            return;
           }
         }
-      });
+    
+        const device = await manager.connectToDevice(MAC_ADDRESS);
+        await device.discoverAllServicesAndCharacteristics();
+    
+        const services = await device.services();
+        for (const service of services) {
+          const characteristics = await service.characteristics();
+          for (const characteristic of characteristics) {
+            if (characteristic.isWritableWithoutResponse) {
+              const recibo =
+                `
+                BMG Imports
+                                           
+                Av. Siempre Viva 340
+                Tel: 921 363 786
 
-      timeoutId = setTimeout(() => {
-        manager.stopDeviceScan();
-        Alert.alert("Tiempo agotado", "No se encontró la impresora.");
+                --------------------------------------------------------                
+                Cantidad de gramos: ${grams}
+                --------------------------------------------------------                
+                Precio por gramo (USD): ${formatNumber(pricePerGramUSD)}
+                Precio por gramo (PEN): ${formatNumber(pricePerGramPEN)}
+                --------------------------------------------------------                
+                Total en USD: ${formatNumber(totalUSD)}
+                Total en PEN: ${formatNumber(totalPEN)}
+                --------------------------------------------------------            
+                Gracias por su compra... :)
+                --------------------------------------------------------
+                `;    
+              const data = Buffer.from(recibo, "utf-8").toString("base64");
+              await characteristic.writeWithoutResponse(data);
+              Alert.alert("Éxito", "Recibo impreso correctamente...vuelva pronto");
+              setIsScanning(false);
+              return;
+            }
+          }
+        }
+    
+        Alert.alert("Error", "No se encontró una característica escribible.");
         setIsScanning(false);
-      }, 10000);
-    } catch (error: any) {
-      Alert.alert("Error", error.message || "Falló la impresión");
-      setIsScanning(false);
+      } catch (error: any) {
+        Alert.alert("Error", error.message || "Falló la impresión");
+        setIsScanning(false);
+      }
     }
-  }
+    
 
   function clearAll() {
     setPricePerOz("");

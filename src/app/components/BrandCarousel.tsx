@@ -45,9 +45,9 @@ export default function BrandCarousel(): JSX.Element {
 
 const styles = StyleSheet.create({
   image: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-    marginRight: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 1,
+    marginRight: 5,
   },
 });

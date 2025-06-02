@@ -30,7 +30,7 @@ export default function InputField({
         style={{
           backgroundColor: darkMode ? "#333" : "white",
           color: darkMode ? "white" : "black",
-          padding: 10,
+          padding: 5,
           borderRadius: 6,
         }}
       />
