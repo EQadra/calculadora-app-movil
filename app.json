@@ -10,7 +10,13 @@
     "android": {
       "package": "com.ecuadra.myapp",
       "versionCode": 1,
-      "permissions": []
+      "permissions": [
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "ACCESS_FINE_LOCATION",
+        "BLUETOOTH_CONNECT",
+        "BLUETOOTH_SCAN"
+      ]
     },
     "web": {
       "output": "static"
@@ -21,14 +27,15 @@
         {
           "origin": "https://n"
         }
-      ]
-    ],
+      ],
+      ["react-native-ble-plx"]
+    ],  
     "extra": {
       "router": {
         "origin": "https://n"
       },
       "eas": {
-        "projectId": "c31f62a0-8226-42e4-8bd3-792a79192183"
+        "projectId": "9bcc6898-2971-4438-ab12-5b40019f638e"
       }
     }
   }

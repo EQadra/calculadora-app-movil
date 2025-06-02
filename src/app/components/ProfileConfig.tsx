@@ -1,5 +1,3 @@
-// Content.tsx
-
 import React, { useState, useRef, useEffect } from "react";
 import {
   View,
@@ -11,13 +9,7 @@ import {
   Image,
   StyleSheet,
   Alert,
-  PermissionsAndroid,
-  Platform,
 } from "react-native";
-import { BleManager } from "react-native-ble-plx";
-import { Buffer } from "buffer";
-
-const manager = new BleManager();
 
 type Props = { darkMode: boolean };
 
@@ -40,16 +32,19 @@ function InputField({
         {label}
       </Text>
       <TextInput
+        keyboardType="numeric"
+        placeholder={placeholder}
+        placeholderTextColor={darkMode ? "#aaa" : "#666"}
         value={value}
         onChangeText={setValue}
-        placeholder={placeholder}
-        placeholderTextColor={darkMode ? "#ccc" : "#555"}
-        keyboardType="decimal-pad"
         style={{
-          backgroundColor: darkMode ? "#222" : "white",
+          borderWidth: 1,
+          borderColor: darkMode ? "#555" : "#ccc",
+          borderRadius: 6,
+          paddingHorizontal: 10,
+          paddingVertical: 8,
           color: darkMode ? "white" : "black",
-          padding: 10,
-          borderRadius: 8,
+          backgroundColor: darkMode ? "#222" : "white",
         }}
       />
     </View>
@@ -62,6 +57,7 @@ export default function Content({ darkMode }: Props) {
   const [purity, setPurity] = useState("");
   const [grams, setGrams] = useState("");
   const [discountPercentage, setDiscountPercentage] = useState("");
+
   const [showModal, setShowModal] = useState(false);
 
   const parse = (val: string) => parseFloat(val.replace(",", ".")) || 0;
@@ -74,7 +70,7 @@ export default function Content({ darkMode }: Props) {
 
   const canCalculate = oz > 0 && rate > 0 && pur > 0;
 
-  const pricePerGramUSD = (oz / 31.1035) * pur * (1 - discount);
+  const pricePerGramUSD = ((oz / 31.1035) * pur) * (discount-1);
   const pricePerGramPEN = pricePerGramUSD * rate;
   const totalUSD = pricePerGramUSD * g;
   const totalPEN = totalUSD * rate;
@@ -84,82 +80,6 @@ export default function Content({ darkMode }: Props) {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-
-  async function imprimirRecibo() {
-    try {
-      if (Platform.OS === "android") {
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        ]);
-        if (
-          granted["android.permission.BLUETOOTH_SCAN"] !==
-            PermissionsAndroid.RESULTS.GRANTED ||
-          granted["android.permission.BLUETOOTH_CONNECT"] !==
-            PermissionsAndroid.RESULTS.GRANTED ||
-          granted["android.permission.ACCESS_FINE_LOCATION"] !==
-            PermissionsAndroid.RESULTS.GRANTED
-        ) {
-          Alert.alert(
-            "Permisos denegados",
-            "Se requieren permisos de Bluetooth y ubicación."
-          );
-          return;
-        }
-      }
-
-      manager.startDeviceScan(null, null, async (error, device) => {
-        if (error) {
-          Alert.alert("Error de escaneo", error.message);
-          return;
-        }
-
-        if (device && device.name && device.name.includes("Printer")) {
-          manager.stopDeviceScan();
-
-          try {
-            const connectedDevice = await device.connect();
-            await connectedDevice.discoverAllServicesAndCharacteristics();
-
-            const services = await connectedDevice.services();
-            for (const service of services) {
-              const characteristics = await service.characteristics();
-              for (const characteristic of characteristics) {
-                if (characteristic.isWritableWithoutResponse) {
-                  const recibo = `
-                    BMG Imports 
-                    Av. Siempre Viva 340.
-                    Teléfono:  921 363 786 
-                    cantidad de Gramos :   ${grams} 
-                    Precio por gramo (USD): ${formatNumber(pricePerGramUSD)}
-                    Precio por gramo (PEN): ${formatNumber(pricePerGramPEN)}
-                    Total en USD: ${formatNumber(totalUSD)}
-                    Total en PEN: ${formatNumber(totalPEN)}
-                    `;
-
-                  const data = Buffer.from(recibo, "utf-8").toString("base64");
-                  await characteristic.writeWithoutResponse(data);
-                  Alert.alert("Éxito", "Recibo impreso correctamente.");
-                  return;
-                }
-              }
-            }
-
-            Alert.alert("Error", "No se encontró una característica escribible.");
-          } catch (connError) {
-            Alert.alert("Error de conexión", connError.message);
-          }
-        }
-      });
-
-      setTimeout(() => {
-        manager.stopDeviceScan();
-      }, 10000);
-    } catch (error) {
-      Alert.alert("Error", error.message || "Falló la impresión");
-    }
-  }
 
   function clearAll() {
     setPricePerOz("");
@@ -185,12 +105,12 @@ export default function Content({ darkMode }: Props) {
             fontWeight: "bold",
             color: darkMode ? "white" : "black",
             textAlign: "center",
-            marginBottom: 12,
           }}
         >
-          Calculadora de Oro
+          Calculadora
         </Text>
 
+        {/* Carrusel de marcas */}
         <BrandCarousel />
 
         <InputField
@@ -238,18 +158,11 @@ export default function Content({ darkMode }: Props) {
               marginTop: 6,
             }}
           >
-            <Text
-              style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}
-            >
+            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Precio por gramo (USD): {formatNumber(pricePerGramUSD)}
             </Text>
-            <Text
-              style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}
-            >
-              Precio por gramo (PEN): {formatNumber(pricePerGramPEN)}
-            </Text>
             <Text style={{ color: darkMode ? "white" : "black" }}>
-              Total en PEN: {formatNumber(totalPEN)}
+              Precio por gramo (PEN): {formatNumber(pricePerGramPEN)}
             </Text>
           </View>
         )}
@@ -271,9 +184,7 @@ export default function Content({ darkMode }: Props) {
               marginRight: 8,
             }}
           >
-            <Text
-              style={{ color: "white", textAlign: "center", fontWeight: "600" }}
-            >
+            <Text style={{ color: "white", textAlign: "center", fontWeight: "600" }}>
               Limpiar
             </Text>
           </TouchableOpacity>
@@ -288,9 +199,7 @@ export default function Content({ darkMode }: Props) {
               marginLeft: 8,
             }}
           >
-            <Text
-              style={{ color: "white", textAlign: "center", fontWeight: "600" }}
-            >
+            <Text style={{ color: "white", textAlign: "center", fontWeight: "600" }}>
               Ver Recibo
             </Text>
           </TouchableOpacity>
@@ -303,12 +212,20 @@ export default function Content({ darkMode }: Props) {
         transparent
         onRequestClose={() => setShowModal(false)}
       >
-        <View style={styles.modalContainer}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
           <View
-            style={[
-              styles.modalContent,
-              { backgroundColor: darkMode ? "#111" : "white" },
-            ]}
+            style={{
+              backgroundColor: darkMode ? "#111" : "white",
+              borderRadius: 12,
+              padding: 20,
+            }}
           >
             <Text
               style={{
@@ -322,43 +239,53 @@ export default function Content({ darkMode }: Props) {
               🧾 Recibo de Cálculo
             </Text>
 
-            <Text
-              style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}
-            >
+            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Precio por gramo (USD): {formatNumber(pricePerGramUSD)}
             </Text>
-            <Text
-              style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}
-            >
+            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Precio por gramo (PEN): {formatNumber(pricePerGramPEN)}
             </Text>
-            <Text
-              style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}
-            >
+            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Total en USD: {formatNumber(totalUSD)}
             </Text>
-            <Text
-              style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}
-            >
+            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Total en PEN: {formatNumber(totalPEN)}
             </Text>
 
-            <View style={styles.modalButtonRow}>
-              <TouchableOpacity
-                onPress={() => setShowModal(false)}
-                style={[styles.button, { backgroundColor: "#555" }]}
-              >
-                <Text style={styles.buttonText}>Cerrar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={imprimirRecibo}
-                style={[styles.button, { backgroundColor: "#83a4d4" }]}
-              >
-                <Text style={[styles.buttonText, { color: "black" }]}>
-                  Imprimir
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 20 }}>
+  <TouchableOpacity
+    onPress={() => setShowModal(false)}
+    style={{
+      flex: 1,
+      backgroundColor: "#555",
+      paddingVertical: 12,
+      borderRadius: 8,
+      marginRight: 8, // espacio a la derecha del primer botón
+    }}
+  >
+    <Text style={{ color: "white", textAlign: "center", fontWeight: "600" }}>
+      Cerrar
+    </Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+  onPress={() => Alert.alert('Alerta', 'Este es el mensaje de la alerta')}
+  style={{
+    flex: 1,
+    backgroundColor: "#83a4d4",
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginLeft: 8, // espacio a la izquierda del botón
+  }}
+>
+    <Text style={{ color: "black", textAlign: "center", fontWeight: "600" }}>
+    Imprimir recibo
+
+    </Text>
+  </TouchableOpacity>
+</View>
+
+            
           </View>
         </View>
       </Modal>
@@ -376,6 +303,7 @@ function BrandCarousel(): JSX.Element {
     "https://picsum.photos/seed/3/100",
     "https://picsum.photos/seed/4/100",
     "https://picsum.photos/seed/5/100",
+    "https://picsum.photos/seed/6/100",
   ];
 
   useEffect(() => {
@@ -387,12 +315,13 @@ function BrandCarousel(): JSX.Element {
         scrollX.current = 0;
       }
       scrollRef.current.scrollTo({ x: scrollX.current, animated: true });
-    }, 2500);
+    }, 2000);
+
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <View style={{ marginBottom: 16 }}>
+    <View style={{ marginVertical: 12 }}>
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -400,7 +329,12 @@ function BrandCarousel(): JSX.Element {
         scrollEnabled={false}
       >
         {brandImages.map((uri, index) => (
-          <Image key={index} source={{ uri }} style={styles.image} />
+          <Image
+            key={index}
+            source={{ uri }}
+            style={styles.image}
+            resizeMode="cover"
+          />
         ))}
       </ScrollView>
     </View>
@@ -409,35 +343,9 @@ function BrandCarousel(): JSX.Element {
 
 const styles = StyleSheet.create({
   image: {
-    width: 80,
-    height: 80,
-    marginHorizontal: 8,
-    borderRadius: 8,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    padding: 20,
-  },
-  modalContent: {
-    borderRadius: 12,
-    padding: 20,
-  },
-  modalButtonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    width: 48,
+    height: 48,
     marginHorizontal: 4,
-  },
-  buttonText: {
-    color: "white",
-    textAlign: "center",
-    fontWeight: "600",
+    borderRadius: 8,
   },
 });

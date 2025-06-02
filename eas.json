@@ -1,23 +1,24 @@
 {
-    "cli": {
-      "version": ">= 3.0.0"
-    },
-    "build": {
-      "preview": {
-        "distribution": "internal",
-        "android": {
-          "buildType": "apk"
-        }
-      },
-      "production": {
-        "distribution": "store",
-        "android": {
-          "buildType": "app-bundle"
-        }
+  "cli": {
+    "version": ">= 3.0.0"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",         // Para builds que puedes instalar directamente (no para Play Store)
+      "android": {
+        "buildType": "apk"               // APK directo para pruebas
       }
     },
-    "submit": {
-      "production": {}
+    "production": {
+      "distribution": "store",           // Para publicar en Play Store
+      "android": {
+        "buildType": "app-bundle"        // AAB requerido por Google Play
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {}
     }
   }
-  
+}

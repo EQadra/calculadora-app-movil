@@ -27,6 +27,7 @@ export default function Header({ darkMode, setDarkMode }: HeaderProps): JSX.Elem
     menuVisible ? closeMenu() : openMenu();
   };
 
+  
   const openMenu = () => {
     Animated.parallel([
       Animated.timing(slideAnim, {
