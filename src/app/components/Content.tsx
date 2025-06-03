@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
   StyleSheet,
+  Image,
   ActivityIndicator,
 } from "react-native";
 
@@ -55,16 +56,20 @@ export default function Content({ darkMode }: Props) {
       maximumFractionDigits: 2,
     });
 
+
+    import { Buffer } from "buffer"; // Asegúrate de tener esto importado
+
     async function imprimirRecibo() {
       if (!canCalculate || grams.trim() === "") {
         Alert.alert("Datos incompletos", "Por favor completa todos los campos antes de imprimir.");
         return;
       }
     
-      const MAC_ADDRESS = "DC:OD:51:40:B7:AB"; // Asegúrate que es el formato correcto
+      const MAC_ADDRESS = "DC:OD:51:40:B7:AB";
       setIsScanning(true);
     
       try {
+        // Permisos Android
         if (Platform.OS === "android") {
           const granted = await PermissionsAndroid.requestMultiple([
             PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
@@ -83,12 +88,13 @@ export default function Content({ darkMode }: Props) {
           }
         }
     
+        // Conexión
         const device = await manager.connectToDevice(MAC_ADDRESS);
         await device.discoverAllServicesAndCharacteristics();
     
         const services = await device.services();
-    
         let writableCharacteristic = null;
+    
         for (const service of services) {
           const characteristics = await service.characteristics();
           for (const characteristic of characteristics) {
@@ -106,6 +112,7 @@ export default function Content({ darkMode }: Props) {
           return;
         }
     
+        // Generar recibo en texto puro
         const recibo =
           `BMG Imports\n` +
           `Av. Siempre Viva 340\n` +
@@ -119,21 +126,28 @@ export default function Content({ darkMode }: Props) {
           `Total en PEN: ${formatNumber(totalPEN)}\n` +
           `----------------------------------------\n` +
           `Gracias por su compra... :)\n` +
-          `----------------------------------------\n`;
-          
-          const data = Buffer.from(recibo, "utf-8");
-          await writableCharacteristic.writeWithResponse(data.toString("base64")); // si y solo si la impresora requiere base64, lo cual es raro
-          
+          `\n\n\n`;
     
-        Alert.alert("Éxito", "Recibo impreso correctamente...vuelva pronto");
+        // Dividir en bloques de 100 caracteres para evitar saturar BLE
+        const bloques = recibo.match(/.{1,100}/g) || [];
+    
+        for (const bloque of bloques) {
+          const base64data = Buffer.from(bloque, "ascii").toString("base64");
+          await writableCharacteristic.writeWithResponse(base64data);
+        }
+    
+        Alert.alert("Éxito", "Recibo impreso correctamente... vuelva pronto");
     
         await manager.cancelDeviceConnection(device.id);
+    
       } catch (error: any) {
+        console.error("BLE Error:", error);
         Alert.alert("Error", error.message || "Falló la impresión");
       } finally {
         setIsScanning(false);
       }
     }
+    
     
     
 
@@ -263,17 +277,54 @@ export default function Content({ darkMode }: Props) {
       <Modal visible={showModal} animationType="slide" transparent onRequestClose={() => setShowModal(false)}>
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: darkMode ? "#111" : "white" }]}>
+          <View className="flex-row items-center gap-3 flex-1">
+            <Image source={require("../../../assets/Logo.png")} style={{ width: 38, height: 40 }} />
+          </View>            
             <Text
               style={{
-                fontSize: 22,
+                fontSize: 18,
                 fontWeight: "700",
                 marginBottom: 16,
                 color: darkMode ? "white" : "black",
                 textAlign: "center",
               }}
             >
-              🧾 Recibo de Cálculo
+           Recibo de Cálculo
             </Text>
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: "700",
+                marginBottom: 16,
+                color: darkMode ? "white" : "black",
+                textAlign: "center",
+              }}
+            >
+           BMG Electronics
+            </Text>
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: "700",
+                marginBottom: 16,
+                color: darkMode ? "white" : "black",
+                textAlign: "center",
+              }}
+            >
+           Av Rafael escardo 1143, San Miguel.
+            </Text>
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: "700",
+                marginBottom: 16,
+                color: darkMode ? "white" : "black",
+                textAlign: "center",
+              }}
+            >
+           Número de Contacto: 912  184 269
+            </Text>
+
             <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Precio por gramo (USD): {formatNumber(pricePerGramUSD)}
             </Text>
