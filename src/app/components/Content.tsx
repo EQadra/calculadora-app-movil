@@ -12,172 +12,180 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
-
+import RNFS from 'react-native-fs';
 import InputField from "./InputField";
 import BrandCarousel from "./BrandCarousel";
 
-import { BleManager, Device } from "react-native-ble-plx";
-import { Buffer } from "buffer";
-const manager = new BleManager();
+import RNHTMLtoPDF from 'react-native-html-to-pdf';
+import Share from 'react-native-share';
 
-
+import { calcularValores, ValoresEntrada } from "../utils/calculadora";
+import { formatNumber } from "../utils/format";
 
 type Props = { darkMode: boolean };
 
 
-async function requestBluetoothPermission(): Promise<boolean> {
-  if (Platform.OS === "android" && Platform.Version >= 23) {
-    const granted = await PermissionsAndroid.requestMultiple([
-      PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-      PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-    ]);
-
-    return (
-      granted["android.permission.BLUETOOTH_CONNECT"] === PermissionsAndroid.RESULTS.GRANTED &&
-      granted["android.permission.BLUETOOTH_SCAN"] === PermissionsAndroid.RESULTS.GRANTED
-    );
-  }
-
-  return true; // iOS u otras versiones de Android no requieren permisos adicionales
-}
-
-//----------------------------------------------------------------------
 
 export default function Content({ darkMode }: Props) {
-  const [pricePerOz, setPricePerOz] = useState("");
-  const [exchangeRate, setExchangeRate] = useState("");
-  const [purity, setPurity] = useState("");
-  const [grams, setGrams] = useState("");
-  const [discountPercentage, setDiscountPercentage] = useState("");
-  const [showModal, setShowModal] = useState(false);
+  // Estado para inputs
+  const [inputs, setInputs] = useState<ValoresEntrada>({
+    pricePerOz: "",
+    exchangeRate: "",
+    purity: "",
+    grams: "",
+    discountPercentage: "",
+  });
 
-  // Nuevo estado para control de escaneo/imprimiendo
+  const [showModal, setShowModal] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
 
-  const parse = (val: string) => parseFloat(val.replace(",", ".")) || 0;
+  // Handler para actualizar inputs
+  const setValue = (key: keyof ValoresEntrada, value: string) => {
+    setInputs((prev) => ({ ...prev, [key]: value }));
+  };
 
-  const oz = parse(pricePerOz);
-  const rate = parse(exchangeRate);
-  const pur = parse(purity);
-  const g = parse(grams);
-  const discount = parse(discountPercentage) / 100;
-
-  const canCalculate = oz > 0 && rate > 0 && pur > 0;
-
-  const pricePerGramUSD = (oz / 31.1035) * pur * (1 - discount);
-  const pricePerGramPEN = pricePerGramUSD * rate;
-  const totalUSD = pricePerGramUSD * g;
-  const totalPEN = totalUSD * rate;
+  // Calcular valores con la función importada
+  const {
+    pricePerGramUSD,
+    pricePerGramPEN,
+    totalUSD,
+    totalPEN,
+    valido,
+  } = calcularValores(inputs);
 
 
-  //-------------------------------------------------
-async function imprimirReciboBLE(deviceId: string, message: string, setIsScanning: (val: boolean) => void) {
-  try {
-    setIsScanning(true);
-
-    // 1. Conectar al dispositivo
-    const device = await manager.connectToDevice(deviceId);
-    await device.discoverAllServicesAndCharacteristics();
-
-    // 2. Obtener servicios y características
-    const services = await device.services();
-    let printed = false;
-
-    for (const service of services) {
-      const characteristics = await service.characteristics();
-
-      for (const char of characteristics) {
-        if (char.isWritableWithoutResponse || char.isWritableWithResponse) {
-          // 3. Codificamos y enviamos el texto
-          const data = Buffer.from(message, "utf-8").toString("base64");
-          await manager.writeCharacteristicWithResponseForDevice(
-            device.id,
-            service.uuid,
-            char.uuid,
-            data
-          );
-          printed = true;
-          break;
+  async function imprimirRecibo({
+    pricePerGramUSD,
+    pricePerGramPEN,
+    totalUSD,
+    totalPEN,
+    grams,
+  }: {
+    pricePerGramUSD: number;
+    pricePerGramPEN: number;
+    totalUSD: number;
+    totalPEN: number;
+    grams: number;
+  }) {
+    try {
+      if (Platform.OS === 'android' && Platform.Version < 30) {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: 'Permiso de almacenamiento',
+            message: 'Se necesita guardar el recibo en PDF para compartirlo o imprimirlo.',
+            buttonNeutral: 'Preguntar luego',
+            buttonNegative: 'Cancelar',
+            buttonPositive: 'Aceptar',
+          },
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('Permiso denegado', 'No se puede generar el PDF sin acceso al almacenamiento.');
+          return;
         }
       }
-      if (printed) break;
-    }
-
-    Alert.alert("Éxito", "El recibo ha sido enviado a la impresora.");
-  } catch (error) {
-    console.error("Error al imprimir:", error);
-    Alert.alert("Error", "No se pudo imprimir el recibo.");
-  } finally {
-    setIsScanning(false);
-  }
-}
-//------------------------------------------------
-function generarReciboTexto({
-  pricePerGramUSD,
-  pricePerGramPEN,
-  totalUSD,
-  totalPEN,
-}: {
-  pricePerGramUSD: number;
-  pricePerGramPEN: number;
-  totalUSD: number;
-  totalPEN: number;
-}) {
-  const format = (n: number) =>
-    n.toLocaleString("es-PE", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-
-  return `
-  ===== BMG Electronics =====
-  Av Rafael Escardo 1143, San Miguel
-  Tel: 912 184 269
-
-  Precio x gramo (USD): ${format(pricePerGramUSD)}
-  Precio x gramo (PEN): ${format(pricePerGramPEN)}
-  Total en USD: ${format(totalUSD)}
-  Total en PEN: ${format(totalPEN)}
-
-  Gracias por su compra
-  ==========================
-  `;
-}
-
-  const formatNumber = (n: number) =>
-    n.toLocaleString("es-PE", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-
-    async function imprimirRecibo() {
-      const permiso = await requestBluetoothPermission();
-      if (!permiso) {
-        Alert.alert("Permiso denegado", "Por favor habilita Bluetooth y permisos.");
-        return;
-      }
-    
-      const textoRecibo = generarReciboTexto({
-        pricePerGramUSD,
-        pricePerGramPEN,
-        totalUSD,
-        totalPEN,
+  
+      // Ruta local del logo (ajustada para Android/iOS)
+      const logoPath = `${RNFS.MainBundlePath}/assets/Logo.png`;
+  
+      // Cargar la imagen en base64
+      const base64Logo = await RNFS.readFile(logoPath, 'base64');
+      const imageDataUri = `data:image/png;base64,${base64Logo}`;
+  
+      const htmlContent = `
+        <html>
+          <head>
+            <style>
+              @page {
+                size: 4.8cm 6cm;
+                margin: 0;
+              }
+              body {
+                margin: 0;
+                padding: 8px;
+                font-family: sans-serif;
+                font-size: 10px;
+              }
+              h2 {
+                text-align: center;
+                font-size: 12px;
+                margin: 4px 0;
+              }
+              .logo {
+                width: 40px;
+                height: 40px;
+                display: block;
+                margin: 0 auto 6px auto;
+              }
+              .section {
+                margin-bottom: 6px;
+              }
+              .bold {
+                font-weight: bold;
+              }
+              hr {
+                border: 0;
+                border-top: 1px solid #000;
+                margin: 4px 0;
+              }
+              .center {
+                text-align: center;
+              }
+            </style>
+          </head>
+          <body>
+            <img src="${imageDataUri}" class="logo" />
+            <h2>Recibo de Cálculo</h2>
+            <hr />
+            <div class="section center">
+              <div class="bold">BMG Electronics</div>
+              <div>Av Rafael Escardó 1143, San Miguel</div>
+              <div>Tel: 912 184 269</div>
+            </div>
+            <hr />
+            <div class="section">💰 Precio x gramo (USD): <span class="bold">$${pricePerGramUSD.toFixed(2)}</span></div>
+            <div class="section">💰 Precio x gramo (PEN): <span class="bold">S/${pricePerGramPEN.toFixed(2)}</span></div>
+            <hr />
+            <div class="section">⚖️ Gramos: <span class="bold">${grams.toFixed(2)} g</span></div>
+            <div class="section">💵 Total USD: <span class="bold">$${totalUSD.toFixed(2)}</span></div>
+            <div class="section">💵 Total PEN: <span class="bold">S/${totalPEN.toFixed(2)}</span></div>
+            <hr />
+            <div class="center">Gracias por su preferencia</div>
+          </body>
+        </html>
+      `;
+  
+      const options = {
+        html: htmlContent,
+        fileName: 'recibo_oro',
+        directory: 'Documents',
+      };
+  
+      const file = await RNHTMLtoPDF.convert(options);
+  
+      await Share.open({
+        url: `file://${file.filePath}`,
+        type: 'application/pdf',
+        failOnCancel: false,
       });
-    
-      const printerId = "DC:OD:51:40:B7:AB"; // Tu dirección
-      await imprimirReciboBLE(printerId, textoRecibo, setIsScanning);
+    } catch (error) {
+      console.error('Error al imprimir o compartir:', error);
+      Alert.alert('Error', 'No se pudo generar ni compartir el recibo.');
     }
-    
-    
-    
-  function clearAll() {
-    setPricePerOz("");
-    setExchangeRate("");
-    setPurity("");
-    setGrams("");
-    setDiscountPercentage("");
   }
+  
+  
+
+  function clearAll() {
+    setInputs({
+      pricePerOz: "",
+      exchangeRate: "",
+      purity: "",
+      grams: "",
+      discountPercentage: "",
+    });
+  }
+
 
   return (
     <View style={{ flex: 1, backgroundColor: darkMode ? "black" : "#cce4ff", padding: 16 }}>
@@ -198,41 +206,41 @@ function generarReciboTexto({
 
         <InputField
           label="Precio de la onza (USD)"
-          value={pricePerOz}
-          setValue={setPricePerOz}
+          value={inputs.pricePerOz}
+          setValue={(v) => setValue("pricePerOz", v)}
           placeholder="Ej: 1980.45"
           darkMode={darkMode}
         />
         <InputField
           label="Tipo de cambio (USD a PEN)"
-          value={exchangeRate}
-          setValue={setExchangeRate}
+          value={inputs.exchangeRate}
+          setValue={(v) => setValue("exchangeRate", v)}
           placeholder="Ej: 3.75"
           darkMode={darkMode}
         />
         <InputField
           label="Ley del oro (pureza)"
-          value={purity}
-          setValue={setPurity}
+          value={inputs.purity}
+          setValue={(v) => setValue("purity", v)}
           placeholder="Ej: 0.75"
           darkMode={darkMode}
         />
         <InputField
           label="% de descuento"
-          value={discountPercentage}
-          setValue={setDiscountPercentage}
+          value={inputs.discountPercentage}
+          setValue={(v) => setValue("discountPercentage", v)}
           placeholder="Ej: 5"
           darkMode={darkMode}
         />
         <InputField
           label="Cantidad de gramos a calcular"
-          value={grams}
-          setValue={setGrams}
+          value={inputs.grams}
+          setValue={(v) => setValue("grams", v)}
           placeholder="Ej: 10"
           darkMode={darkMode}
         />
 
-        {canCalculate && (
+        {valido && (
           <View
             style={{
               backgroundColor: darkMode ? "#222" : "#f0f0f0",
@@ -278,12 +286,13 @@ function generarReciboTexto({
               marginLeft: 8,
             }}
             disabled={isScanning}
+            // Deshabilita si no hay valores válidos para calcular
+            //disabled={!valido || isScanning}
           >
             <Text style={{ color: "white", textAlign: "center", fontWeight: "600" }}>Ver Recibo</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Indicador de carga */}
         {isScanning && (
           <View style={{ marginTop: 20, alignItems: "center" }}>
             <ActivityIndicator size="large" color="#0275d8" />
@@ -297,9 +306,10 @@ function generarReciboTexto({
       <Modal visible={showModal} animationType="slide" transparent onRequestClose={() => setShowModal(false)}>
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: darkMode ? "#111" : "white" }]}>
-          <View className="flex-row items-center gap-3 flex-1">
-            <Image source={require("../../../assets/Logo.png")} style={{ width: 38, height: 40 }} />
-          </View>            
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+              <Image source={require("../../../assets/Logo.png")} style={{ width: 38, height: 40 }} />
+            </View>
+
             <Text
               style={{
                 fontSize: 18,
@@ -309,7 +319,7 @@ function generarReciboTexto({
                 textAlign: "center",
               }}
             >
-           Recibo de Cálculo
+              Recibo de Cálculo
             </Text>
             <Text
               style={{
@@ -320,7 +330,7 @@ function generarReciboTexto({
                 textAlign: "center",
               }}
             >
-           BMG Electronics
+              BMG Electronics
             </Text>
             <Text
               style={{
@@ -331,7 +341,7 @@ function generarReciboTexto({
                 textAlign: "center",
               }}
             >
-           Av Rafael escardo 1143, San Miguel.
+              Av Rafael escardo 1143, San Miguel.
             </Text>
             <Text
               style={{
@@ -342,7 +352,7 @@ function generarReciboTexto({
                 textAlign: "center",
               }}
             >
-           Número de Contacto: 912  184 269
+              Número de Contacto: 912  184 269
             </Text>
 
             <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
@@ -367,7 +377,13 @@ function generarReciboTexto({
                 <Text style={styles.buttonText}>Cerrar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={imprimirRecibo}
+                onPress={() => imprimirRecibo({
+                  pricePerGramUSD,
+                  pricePerGramPEN,
+                  totalUSD,
+                  totalPEN,
+                  grams: Number(inputs.grams) || 0,
+                })}
                 style={[styles.button, { backgroundColor: "#83a4d4" }]}
                 disabled={isScanning}
               >
@@ -380,6 +396,7 @@ function generarReciboTexto({
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   modalContainer: {

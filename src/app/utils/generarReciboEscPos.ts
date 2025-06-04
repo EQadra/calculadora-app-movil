@@ -1,53 +1,80 @@
-// utils/generarReciboEscPos.ts
-import EscPosEncoder from "esc-pos-encoder";
-import { ValoresCalculados } from "./calculadora";
+import { BleManager } from "react-native-ble-plx";
 
-function format(n: number): string {
-  return n.toLocaleString("es-PE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+export type ReciboData = {
+  pricePerGramUSD: number;
+  pricePerGramPEN: number;
+  totalUSD: number;
+  totalPEN: number;
+};
+
+const manager = new BleManager();
+
+/**
+ * Genera un buffer ESC/POS para el recibo de texto.
+ */
+export function generarReciboTexto(data: ReciboData): Uint8Array {
+  const { pricePerGramUSD, pricePerGramPEN, totalUSD, totalPEN } = data;
+
+  const ESC = "\x1B";
+  const LF = "\x0A";
+
+  let receipt = "";
+  receipt += ESC + "@"; // Reset impresora
+  receipt += "RECIBO DE CÁLCULO" + LF;
+  receipt += "-----------------------------" + LF;
+  receipt += `Precio por gramo (USD): ${pricePerGramUSD.toFixed(2)}` + LF;
+  receipt += `Precio por gramo (PEN): ${pricePerGramPEN.toFixed(2)}` + LF;
+  receipt += `Total en USD: ${totalUSD.toFixed(2)}` + LF;
+  receipt += `Total en PEN: ${totalPEN.toFixed(2)}` + LF;
+  receipt += "-----------------------------" + LF;
+  receipt += LF.repeat(3); // saltos para corte
+
+  return new TextEncoder().encode(receipt);
 }
 
-export function generarReciboEscPos({
-  pricePerGramUSD,
-  pricePerGramPEN,
-  totalUSD,
-  totalPEN,
-}: ValoresCalculados): Uint8Array {
-  const now = new Date().toLocaleString("es-PE");
+/**
+ * Imprime el recibo enviando el buffer ESC/POS a la impresora Bluetooth.
+ */
+export async function imprimirReciboBLE(
+  printerId: string,
+  receiptBuffer: Uint8Array,
+  setLoading: (loading: boolean) => void
+): Promise<void> {
+  try {
+    setLoading(true);
 
-  const encoder = new EscPosEncoder();
-  const result = encoder
-    .initialize()
-    .align("center")
-    .text("===== BMG Electronics =====")
-    .newline()
-    .text("Av Rafael Escardo 1143, San Miguel")
-    .newline()
-    .text("Tel: 912 184 269")
-    .newline()
-    .text(now)
-    .newline()
-    .text("----------------------------")
-    .align("left")
-    .text(`Precio x gramo (USD): ${format(pricePerGramUSD)}`)
-    .newline()
-    .text(`Precio x gramo (PEN): ${format(pricePerGramPEN)}`)
-    .newline()
-    .bold(true)
-    .text(`Total USD: ${format(totalUSD)}`)
-    .newline()
-    .text(`Total PEN: ${format(totalPEN)}`)
-    .bold(false)
-    .newline()
-    .text("----------------------------")
-    .align("center")
-    .text("Gracias por su compra")
-    .newline()
-    .newline()
-    .cut()
-    .encode();
+    const device = await manager.connectToDevice(printerId);
+    await device.discoverAllServicesAndCharacteristics();
 
-  return result;
+    const services = await device.services();
+    let writableCharacteristic = null;
+
+    for (const service of services) {
+      const characteristics = await service.characteristics();
+      for (const c of characteristics) {
+        if (c.isWritableWithResponse || c.isWritableWithoutResponse) {
+          writableCharacteristic = c;
+          break;
+        }
+      }
+      if (writableCharacteristic) break;
+    }
+
+    if (!writableCharacteristic) {
+      throw new Error("No se encontró característica para escritura en la impresora");
+    }
+
+    const chunkSize = 20;
+    for (let i = 0; i < receiptBuffer.length; i += chunkSize) {
+      const chunk = receiptBuffer.slice(i, i + chunkSize);
+      await writableCharacteristic.writeWithResponse(Buffer.from(chunk).toString("base64"));
+    }
+
+    await device.cancelConnection();
+  } catch (error) {
+    console.error("Error imprimiendo recibo:", error);
+    throw error;
+  } finally {
+    setLoading(false);
+  }
 }
