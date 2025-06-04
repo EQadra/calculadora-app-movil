@@ -16,13 +16,32 @@ import {
 import InputField from "./InputField";
 import BrandCarousel from "./BrandCarousel";
 
-import { BleManager } from "react-native-ble-plx";
+import { BleManager, Device } from "react-native-ble-plx";
 import { Buffer } from "buffer";
 const manager = new BleManager();
 
 
 
 type Props = { darkMode: boolean };
+
+
+async function requestBluetoothPermission(): Promise<boolean> {
+  if (Platform.OS === "android" && Platform.Version >= 23) {
+    const granted = await PermissionsAndroid.requestMultiple([
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    ]);
+
+    return (
+      granted["android.permission.BLUETOOTH_CONNECT"] === PermissionsAndroid.RESULTS.GRANTED &&
+      granted["android.permission.BLUETOOTH_SCAN"] === PermissionsAndroid.RESULTS.GRANTED
+    );
+  }
+
+  return true; // iOS u otras versiones de Android no requieren permisos adicionales
+}
+
 
 export default function Content({ darkMode }: Props) {
   const [pricePerOz, setPricePerOz] = useState("");
@@ -50,99 +69,64 @@ export default function Content({ darkMode }: Props) {
   const totalUSD = pricePerGramUSD * g;
   const totalPEN = totalUSD * rate;
 
+
   const formatNumber = (n: number) =>
     n.toLocaleString("es-PE", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
 
-
-    import { Buffer } from "buffer"; // Asegúrate de tener esto importado
-
     async function imprimirRecibo() {
-      if (!canCalculate || grams.trim() === "") {
-        Alert.alert("Datos incompletos", "Por favor completa todos los campos antes de imprimir.");
+      const permisos = await requestBluetoothPermission();
+      if (!permisos) {
+        Alert.alert("Permisos denegados", "No se puede usar Bluetooth sin permisos.");
         return;
       }
     
-      const MAC_ADDRESS = "DC:OD:51:40:B7:AB";
       setIsScanning(true);
-    
       try {
-        // Permisos Android
-        if (Platform.OS === "android") {
-          const granted = await PermissionsAndroid.requestMultiple([
-            PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-            PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-          ]);
+        const dispositivo = await manager.connectToDevice("DC:OD:51:40:B7:AB");
+        await dispositivo.discoverAllServicesAndCharacteristics();
     
-          if (
-            granted["android.permission.BLUETOOTH_CONNECT"] !== PermissionsAndroid.RESULTS.GRANTED ||
-            granted["android.permission.BLUETOOTH_SCAN"] !== PermissionsAndroid.RESULTS.GRANTED ||
-            granted["android.permission.ACCESS_FINE_LOCATION"] !== PermissionsAndroid.RESULTS.GRANTED
-          ) {
-            Alert.alert("Permisos denegados", "Se requieren permisos de Bluetooth y ubicación.");
-            setIsScanning(false);
-            return;
-          }
-        }
-    
-        // Conexión
-        const device = await manager.connectToDevice(MAC_ADDRESS);
-        await device.discoverAllServicesAndCharacteristics();
-    
-        const services = await device.services();
         let writableCharacteristic = null;
+        const services = await dispositivo.services();
     
         for (const service of services) {
           const characteristics = await service.characteristics();
-          for (const characteristic of characteristics) {
-            if (characteristic.isWritableWithResponse || characteristic.isWritableWithoutResponse) {
-              writableCharacteristic = characteristic;
-              break;
-            }
-          }
+          writableCharacteristic = characteristics.find(
+            c => c.isWritableWithResponse || c.isWritableWithoutResponse
+          );
           if (writableCharacteristic) break;
         }
     
-        if (!writableCharacteristic) {
-          Alert.alert("Error", "No se encontró una característica escribible.");
-          setIsScanning(false);
-          return;
+        if (!writableCharacteristic) throw new Error("No se encontró característica escribible.");
+    
+        // Recibo ASCII puro (usa \n para saltos de línea)
+        const recibo = `
+    BMG IMPORTS
+    -------------------------
+    Gramos: ${grams}
+    Precio x gramo (USD): ${formatNumber(pricePerGramUSD)}
+    Precio x gramo (PEN): ${formatNumber(pricePerGramPEN)}
+    Total USD: ${formatNumber(totalUSD)}
+    Total PEN: ${formatNumber(totalPEN)}
+    -------------------------
+    Gracias por su compra!
+    `.trim();
+    
+        const buffer = Buffer.from(recibo, "ascii");
+        const MAX_PACKET_SIZE = 20;
+    
+        for (let i = 0; i < buffer.length; i += MAX_PACKET_SIZE) {
+          const slice = buffer.slice(i, i + MAX_PACKET_SIZE);
+          await writableCharacteristic.writeWithResponse(slice.toString("base64"));
+          await new Promise(resolve => setTimeout(resolve, 30)); // evita sobresaturación
         }
     
-        // Generar recibo en texto puro
-        const recibo =
-          `BMG Imports\n` +
-          `Av. Siempre Viva 340\n` +
-          `Tel: 921 363 786\n` +
-          `----------------------------------------\n` +
-          `Cantidad de gramos: ${grams}\n` +
-          `Precio por gramo (USD): ${formatNumber(pricePerGramUSD)}\n` +
-          `Precio por gramo (PEN): ${formatNumber(pricePerGramPEN)}\n` +
-          `----------------------------------------\n` +
-          `Total en USD: ${formatNumber(totalUSD)}\n` +
-          `Total en PEN: ${formatNumber(totalPEN)}\n` +
-          `----------------------------------------\n` +
-          `Gracias por su compra... :)\n` +
-          `\n\n\n`;
-    
-        // Dividir en bloques de 100 caracteres para evitar saturar BLE
-        const bloques = recibo.match(/.{1,100}/g) || [];
-    
-        for (const bloque of bloques) {
-          const base64data = Buffer.from(bloque, "ascii").toString("base64");
-          await writableCharacteristic.writeWithResponse(base64data);
-        }
-    
-        Alert.alert("Éxito", "Recibo impreso correctamente... vuelva pronto");
-    
-        await manager.cancelDeviceConnection(device.id);
-    
+        Alert.alert("Éxito", "Recibo impreso correctamente.");
+        await manager.cancelDeviceConnection(dispositivo.id);
       } catch (error: any) {
-        console.error("BLE Error:", error);
-        Alert.alert("Error", error.message || "Falló la impresión");
+        Alert.alert("Error", error.message || "Error al imprimir");
       } finally {
         setIsScanning(false);
       }
@@ -150,7 +134,6 @@ export default function Content({ darkMode }: Props) {
     
     
     
-
   function clearAll() {
     setPricePerOz("");
     setExchangeRate("");
