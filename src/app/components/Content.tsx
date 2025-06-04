@@ -85,13 +85,6 @@ export default function Content({ darkMode }: Props) {
         }
       }
   
-      // Ruta local del logo (ajustada para Android/iOS)
-      const logoPath = `${RNFS.MainBundlePath}/assets/Logo.png`;
-  
-      // Cargar la imagen en base64
-      const base64Logo = await RNFS.readFile(logoPath, 'base64');
-      const imageDataUri = `data:image/png;base64,${base64Logo}`;
-  
       const htmlContent = `
         <html>
           <head>
@@ -134,7 +127,6 @@ export default function Content({ darkMode }: Props) {
             </style>
           </head>
           <body>
-            <img src="${imageDataUri}" class="logo" />
             <h2>Recibo de Cálculo</h2>
             <hr />
             <div class="section center">
