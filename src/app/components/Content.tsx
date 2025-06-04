@@ -42,6 +42,7 @@ async function requestBluetoothPermission(): Promise<boolean> {
   return true; // iOS u otras versiones de Android no requieren permisos adicionales
 }
 
+//----------------------------------------------------------------------
 
 export default function Content({ darkMode }: Props) {
   const [pricePerOz, setPricePerOz] = useState("");
@@ -70,6 +71,80 @@ export default function Content({ darkMode }: Props) {
   const totalPEN = totalUSD * rate;
 
 
+  //-------------------------------------------------
+async function imprimirReciboBLE(deviceId: string, message: string, setIsScanning: (val: boolean) => void) {
+  try {
+    setIsScanning(true);
+
+    // 1. Conectar al dispositivo
+    const device = await manager.connectToDevice(deviceId);
+    await device.discoverAllServicesAndCharacteristics();
+
+    // 2. Obtener servicios y características
+    const services = await device.services();
+    let printed = false;
+
+    for (const service of services) {
+      const characteristics = await service.characteristics();
+
+      for (const char of characteristics) {
+        if (char.isWritableWithoutResponse || char.isWritableWithResponse) {
+          // 3. Codificamos y enviamos el texto
+          const data = Buffer.from(message, "utf-8").toString("base64");
+          await manager.writeCharacteristicWithResponseForDevice(
+            device.id,
+            service.uuid,
+            char.uuid,
+            data
+          );
+          printed = true;
+          break;
+        }
+      }
+      if (printed) break;
+    }
+
+    Alert.alert("Éxito", "El recibo ha sido enviado a la impresora.");
+  } catch (error) {
+    console.error("Error al imprimir:", error);
+    Alert.alert("Error", "No se pudo imprimir el recibo.");
+  } finally {
+    setIsScanning(false);
+  }
+}
+//------------------------------------------------
+function generarReciboTexto({
+  pricePerGramUSD,
+  pricePerGramPEN,
+  totalUSD,
+  totalPEN,
+}: {
+  pricePerGramUSD: number;
+  pricePerGramPEN: number;
+  totalUSD: number;
+  totalPEN: number;
+}) {
+  const format = (n: number) =>
+    n.toLocaleString("es-PE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+  return `
+  ===== BMG Electronics =====
+  Av Rafael Escardo 1143, San Miguel
+  Tel: 912 184 269
+
+  Precio x gramo (USD): ${format(pricePerGramUSD)}
+  Precio x gramo (PEN): ${format(pricePerGramPEN)}
+  Total en USD: ${format(totalUSD)}
+  Total en PEN: ${format(totalPEN)}
+
+  Gracias por su compra
+  ==========================
+  `;
+}
+
   const formatNumber = (n: number) =>
     n.toLocaleString("es-PE", {
       minimumFractionDigits: 2,
@@ -77,59 +152,21 @@ export default function Content({ darkMode }: Props) {
     });
 
     async function imprimirRecibo() {
-      const permisos = await requestBluetoothPermission();
-      if (!permisos) {
-        Alert.alert("Permisos denegados", "No se puede usar Bluetooth sin permisos.");
+      const permiso = await requestBluetoothPermission();
+      if (!permiso) {
+        Alert.alert("Permiso denegado", "Por favor habilita Bluetooth y permisos.");
         return;
       }
     
-      setIsScanning(true);
-      try {
-        const dispositivo = await manager.connectToDevice("DC:OD:51:40:B7:AB");
-        await dispositivo.discoverAllServicesAndCharacteristics();
+      const textoRecibo = generarReciboTexto({
+        pricePerGramUSD,
+        pricePerGramPEN,
+        totalUSD,
+        totalPEN,
+      });
     
-        let writableCharacteristic = null;
-        const services = await dispositivo.services();
-    
-        for (const service of services) {
-          const characteristics = await service.characteristics();
-          writableCharacteristic = characteristics.find(
-            c => c.isWritableWithResponse || c.isWritableWithoutResponse
-          );
-          if (writableCharacteristic) break;
-        }
-    
-        if (!writableCharacteristic) throw new Error("No se encontró característica escribible.");
-    
-        // Recibo ASCII puro (usa \n para saltos de línea)
-        const recibo = `
-    BMG IMPORTS
-    -------------------------
-    Gramos: ${grams}
-    Precio x gramo (USD): ${formatNumber(pricePerGramUSD)}
-    Precio x gramo (PEN): ${formatNumber(pricePerGramPEN)}
-    Total USD: ${formatNumber(totalUSD)}
-    Total PEN: ${formatNumber(totalPEN)}
-    -------------------------
-    Gracias por su compra!
-    `.trim();
-    
-        const buffer = Buffer.from(recibo, "ascii");
-        const MAX_PACKET_SIZE = 20;
-    
-        for (let i = 0; i < buffer.length; i += MAX_PACKET_SIZE) {
-          const slice = buffer.slice(i, i + MAX_PACKET_SIZE);
-          await writableCharacteristic.writeWithResponse(slice.toString("base64"));
-          await new Promise(resolve => setTimeout(resolve, 30)); // evita sobresaturación
-        }
-    
-        Alert.alert("Éxito", "Recibo impreso correctamente.");
-        await manager.cancelDeviceConnection(dispositivo.id);
-      } catch (error: any) {
-        Alert.alert("Error", error.message || "Error al imprimir");
-      } finally {
-        setIsScanning(false);
-      }
+      const printerId = "DC:OD:51:40:B7:AB"; // Tu dirección
+      await imprimirReciboBLE(printerId, textoRecibo, setIsScanning);
     }
     
     

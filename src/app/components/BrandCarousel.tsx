@@ -11,6 +11,11 @@ export default function BrandCarousel(): JSX.Element {
     "https://picsum.photos/seed/3/100",
     "https://picsum.photos/seed/4/100",
     "https://picsum.photos/seed/5/100",
+    "https://picsum.photos/seed/6/100",
+    "https://picsum.photos/seed/7/100",
+    "https://picsum.photos/seed/8/100",
+    "https://picsum.photos/seed/9/100",
+    "https://picsum.photos/seed/10/100",
   ];
 
   useEffect(() => {
