@@ -230,7 +230,7 @@ export default function Content({ darkMode }: Props) {
           setValue={(v) => setValue("grams", v)}
           placeholder="Ej: 10"
           darkMode={darkMode}
-        />
+        />   
 
         {valido && (
           <View
