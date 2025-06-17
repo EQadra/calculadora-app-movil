@@ -5,29 +5,25 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  PermissionsAndroid,
-  Platform,
   Alert,
   StyleSheet,
   Image,
   ActivityIndicator,
 } from "react-native";
-import RNFS from 'react-native-fs';
+
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
+
 import InputField from "./InputField";
 import BrandCarousel from "./BrandCarousel";
+import { calcularValores, ValoresEntrada } from "../../utils/calculadora";
+import { formatNumber } from "../../utils/format";
 
-import RNHTMLtoPDF from 'react-native-html-to-pdf';
-import Share from 'react-native-share';
+type Props = {
+  darkMode: boolean;
+};
 
-import { calcularValores, ValoresEntrada } from "../utils/calculadora";
-import { formatNumber } from "../utils/format";
-
-type Props = { darkMode: boolean };
-
-
-
-export default function Content({ darkMode }: Props) {
-  // Estado para inputs
+export default function Content({ darkMode }: Props): JSX.Element {
   const [inputs, setInputs] = useState<ValoresEntrada>({
     pricePerOz: "",
     exchangeRate: "",
@@ -36,15 +32,13 @@ export default function Content({ darkMode }: Props) {
     discountPercentage: "",
   });
 
-  const [showModal, setShowModal] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [isScanning, setIsScanning] = useState<boolean>(false);
 
-  // Handler para actualizar inputs
   const setValue = (key: keyof ValoresEntrada, value: string) => {
     setInputs((prev) => ({ ...prev, [key]: value }));
   };
 
-  // Calcular valores con la función importada
   const {
     pricePerGramUSD,
     pricePerGramPEN,
@@ -52,7 +46,6 @@ export default function Content({ darkMode }: Props) {
     totalPEN,
     valido,
   } = calcularValores(inputs);
-
 
   async function imprimirRecibo({
     pricePerGramUSD,
@@ -68,68 +61,47 @@ export default function Content({ darkMode }: Props) {
     grams: number;
   }) {
     try {
-      if (Platform.OS === 'android' && Platform.Version < 30) {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          {
-            title: 'Permiso de almacenamiento',
-            message: 'Se necesita guardar el recibo en PDF para compartirlo o imprimirlo.',
-            buttonNeutral: 'Preguntar luego',
-            buttonNegative: 'Cancelar',
-            buttonPositive: 'Aceptar',
-          },
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          Alert.alert('Permiso denegado', 'No se puede generar el PDF sin acceso al almacenamiento.');
-          return;
-        }
-      }
-  
       const htmlContent = `
         <html>
-          <head>
-            <style>
-              @page {
-                size: 4.8cm 6cm;
-                margin: 0;
-              }
-              body {
-                margin: 0;
-                padding: 8px;
-                font-family: sans-serif;
-                font-size: 10px;
-              }
-              h2 {
-                text-align: center;
-                font-size: 12px;
-                margin: 4px 0;
-              }
-              .logo {
-                width: 40px;
-                height: 40px;
-                display: block;
-                margin: 0 auto 6px auto;
-              }
-              .section {
-                margin-bottom: 6px;
-              }
-              .bold {
-                font-weight: bold;
-              }
-              hr {
-                border: 0;
-                border-top: 1px solid #000;
-                margin: 4px 0;
-              }
-              .center {
-                text-align: center;
-              }
-            </style>
-          </head>
+         <head>
+  <style>
+    @page {
+      size: 40mm 60mm;
+      margin: 0;
+    }
+    body {
+      font-family: sans-serif;
+      width: 40mm;
+      height: 60mm;
+      padding: 8px;
+      font-size: 12px;
+      box-sizing: border-box;
+      margin: 0;
+    }
+    h2 {
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .section {
+      margin-bottom: 4px;
+    }
+    .bold {
+      font-weight: bold;
+    }
+    .center {
+      text-align: center;
+    }
+    hr {
+      margin: 4px 0;
+    }
+  </style>
+</head>
+
           <body>
             <h2>Recibo de Cálculo</h2>
             <hr />
-            <div class="section center">
+            <div class="center">
               <div class="bold">BMG Electronics</div>
               <div>Av Rafael Escardó 1143, San Miguel</div>
               <div>Tel: 912 184 269</div>
@@ -137,7 +109,6 @@ export default function Content({ darkMode }: Props) {
             <hr />
             <div class="section">💰 Precio x gramo (USD): <span class="bold">$${pricePerGramUSD.toFixed(2)}</span></div>
             <div class="section">💰 Precio x gramo (PEN): <span class="bold">S/${pricePerGramPEN.toFixed(2)}</span></div>
-            <hr />
             <div class="section">⚖️ Gramos: <span class="bold">${grams.toFixed(2)} g</span></div>
             <div class="section">💵 Total USD: <span class="bold">$${totalUSD.toFixed(2)}</span></div>
             <div class="section">💵 Total PEN: <span class="bold">S/${totalPEN.toFixed(2)}</span></div>
@@ -146,29 +117,23 @@ export default function Content({ darkMode }: Props) {
           </body>
         </html>
       `;
-  
-      const options = {
-        html: htmlContent,
-        fileName: 'recibo_oro',
-        directory: 'Documents',
-      };
-  
-      const file = await RNHTMLtoPDF.convert(options);
-  
-      await Share.open({
-        url: `file://${file.filePath}`,
-        type: 'application/pdf',
-        failOnCancel: false,
-      });
+
+      const { uri } = await Print.printToFileAsync({ html: htmlContent });
+
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        alert("Compartir no está disponible en este dispositivo.");
+        return;
+      }
+
+      await Sharing.shareAsync(uri);
     } catch (error) {
-      console.error('Error al imprimir o compartir:', error);
-      Alert.alert('Error', 'No se pudo generar ni compartir el recibo.');
+      console.error("Error al generar o compartir el recibo:", error);
+      Alert.alert("Error", "No se pudo generar ni compartir el recibo.");
     }
   }
-  
-  
 
-  function clearAll() {
+  const clearAll = () => {
     setInputs({
       pricePerOz: "",
       exchangeRate: "",
@@ -176,8 +141,7 @@ export default function Content({ darkMode }: Props) {
       grams: "",
       discountPercentage: "",
     });
-  }
-
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: darkMode ? "black" : "#cce4ff", padding: 16 }}>
@@ -230,7 +194,7 @@ export default function Content({ darkMode }: Props) {
           setValue={(v) => setValue("grams", v)}
           placeholder="Ej: 10"
           darkMode={darkMode}
-        />   
+        />
 
         {valido && (
           <View
@@ -278,8 +242,6 @@ export default function Content({ darkMode }: Props) {
               marginLeft: 8,
             }}
             disabled={isScanning}
-            // Deshabilita si no hay valores válidos para calcular
-            //disabled={!valido || isScanning}
           >
             <Text style={{ color: "white", textAlign: "center", fontWeight: "600" }}>Ver Recibo</Text>
           </TouchableOpacity>
@@ -298,54 +260,14 @@ export default function Content({ darkMode }: Props) {
       <Modal visible={showModal} animationType="slide" transparent onRequestClose={() => setShowModal(false)}>
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: darkMode ? "#111" : "white" }]}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-              <Image source={require("../../../assets/Logo.png")} style={{ width: 38, height: 40 }} />
-            </View>
+            <Image source={require("../../../assets/Logo.png")} style={{ width: 38, height: 40, marginBottom: 12 }} />
 
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "700",
-                marginBottom: 16,
-                color: darkMode ? "white" : "black",
-                textAlign: "center",
-              }}
-            >
+            <Text style={[styles.modalTitle, { color: darkMode ? "white" : "black" }]}>
               Recibo de Cálculo
             </Text>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: "700",
-                marginBottom: 16,
-                color: darkMode ? "white" : "black",
-                textAlign: "center",
-              }}
-            >
-              BMG Electronics
-            </Text>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: "700",
-                marginBottom: 16,
-                color: darkMode ? "white" : "black",
-                textAlign: "center",
-              }}
-            >
-              Av Rafael escardo 1143, San Miguel.
-            </Text>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: "700",
-                marginBottom: 16,
-                color: darkMode ? "white" : "black",
-                textAlign: "center",
-              }}
-            >
-              Número de Contacto: 912  184 269
-            </Text>
+            <Text style={styles.modalSubText}>BMG Electronics</Text>
+            <Text style={styles.modalSubText}>Av Rafael Escardó 1143, San Miguel</Text>
+            <Text style={styles.modalSubText}>Número de Contacto: 912 184 269</Text>
 
             <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Precio por gramo (USD): {formatNumber(pricePerGramUSD)}
@@ -364,20 +286,20 @@ export default function Content({ darkMode }: Props) {
               <TouchableOpacity
                 onPress={() => setShowModal(false)}
                 style={[styles.button, { backgroundColor: "#555" }]}
-                disabled={isScanning}
               >
                 <Text style={styles.buttonText}>Cerrar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => imprimirRecibo({
-                  pricePerGramUSD,
-                  pricePerGramPEN,
-                  totalUSD,
-                  totalPEN,
-                  grams: Number(inputs.grams) || 0,
-                })}
+                onPress={() =>
+                  imprimirRecibo({
+                    pricePerGramUSD,
+                    pricePerGramPEN,
+                    totalUSD,
+                    totalPEN,
+                    grams: Number(inputs.grams) || 0,
+                  })
+                }
                 style={[styles.button, { backgroundColor: "#83a4d4" }]}
-                disabled={isScanning}
               >
                 <Text style={[styles.buttonText, { color: "black" }]}>Imprimir</Text>
               </TouchableOpacity>
@@ -388,7 +310,6 @@ export default function Content({ darkMode }: Props) {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   modalContainer: {
@@ -416,5 +337,18 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontWeight: "bold",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  modalSubText: {
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 8,
+    textAlign: "center",
+    color: "#888",
   },
 });

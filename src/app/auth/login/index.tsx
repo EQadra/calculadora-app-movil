@@ -16,7 +16,7 @@ export default function LoginScreen(): JSX.Element {
   const handleLogin = async (): Promise<void> => {
     try {
       await login(email, password);
-      router.push("/aplication/home-app");
+      router.push("/auth/home");
     } catch (error) {
       console.error("Error en login:", error);
       // Aquí podrías agregar un Alert o Toast
