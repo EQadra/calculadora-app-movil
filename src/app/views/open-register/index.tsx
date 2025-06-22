@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, Alert } from "react-native";
-import { useCaja } from "../../context/CajaContext";
+import { useCaja } from "../../../context/CajaContext";
 
 export default function AperturaCaja() {
   const { abrirCaja } = useCaja();

@@ -36,6 +36,23 @@ export default function RootLayout(): JSX.Element {
             <Stack.Screen name="auth/signup" options={{ headerShown: false }} />
           </Stack>
 
+          <Stack>
+            {/*  */}
+            <Stack.Screen name="configApp/profile_admin" options={{ headerShown: false }} />
+            <Stack.Screen name="configApp/profile_user" options={{ headerShown: false }} />  
+          </Stack>
+
+          <Stack>
+            {/*  */}
+            <Stack.Screen name="views/reports" options={{ headerShown: false }} />          
+            <Stack.Screen name="views/register-transaction" options={{ headerShown: false }} />          
+            <Stack.Screen name="views/daily-history" options={{ headerShown: false }} />          
+            <Stack.Screen name="views/open-register" options={{ headerShown: false }} />          
+          </Stack>
+
+
+
+
           {/* FOOTER */}
           <View style={styles.footer}>
           <Footer darkMode={darkMode} setDarkMode={setDarkMode} />

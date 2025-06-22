@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
-import { useCaja } from "../../context/CajaContext";
-import { formatNumber } from "../../utils/format";
+import { useCaja } from "../../../context/CajaContext";
+import { formatNumber } from "../../../utils/format";
 
 export default function HistorialDiario({ darkMode }: { darkMode: boolean }) {
   const { transacciones } = useCaja();

@@ -8,11 +8,11 @@ import {
   Modal,
   ActivityIndicator,
 } from "react-native";
-import InputField from "../components/InputField";
-import BrandCarousel from "../components/BrandCarousel";
-import { calcularValores, ValoresEntrada } from "../../utils/calculadora";
-import { formatNumber } from "../../utils/format";
-import { useCaja } from "../../context/CajaContext";
+import InputField from "../../components/InputField";
+import BrandCarousel from "../../components/BrandCarousel";
+import { calcularValores, ValoresEntrada } from "../../../utils/calculadora";
+import { formatNumber } from "../../../utils/format";
+import { useCaja } from "../../../context/CajaContext";
 import uuid from "react-native-uuid";
 
 export default function RegistroTransaccion({ darkMode }: { darkMode: boolean }) {
