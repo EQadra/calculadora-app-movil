@@ -16,8 +16,10 @@
     "base-64": "^1.0.0",
     "expo": "^53.0.11",
     "expo-constants": "~17.1.4",
+    "expo-file-system": "~18.1.10",
     "expo-image-picker": "~16.1.4",
     "expo-linking": "~7.1.4",
+    "expo-print": "~14.1.4",
     "expo-router": "~5.1.0",
     "expo-sharing": "~13.1.5",
     "expo-splash-screen": "^0.30.9",
@@ -35,10 +37,9 @@
     "react-native-screens": "~4.11.1",
     "react-native-share": "^12.0.11",
     "react-native-svg": "15.11.2",
+    "react-native-uuid": "^2.0.3",
     "react-native-web": "^0.20.0",
-    "tailwindcss": "^3.4.0",
-    "expo-file-system": "~18.1.10",
-    "expo-print": "~14.1.4"
+    "tailwindcss": "^3.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

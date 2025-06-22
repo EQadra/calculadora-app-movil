@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 import { View, StyleSheet } from "react-native";
 import { AuthProvider } from "../context/AuthProvider";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { CajaProvider } from "../context/CajaContext";
 
 import Footer from "./components/Footer";
 import Header from "./components/Header";
@@ -14,6 +15,8 @@ export default function RootLayout(): JSX.Element {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
+      <CajaProvider>
+
         <View style={styles.container}>
           {/* HEADER */}
           <View style={styles.footer}>
@@ -38,6 +41,8 @@ export default function RootLayout(): JSX.Element {
           <Footer darkMode={darkMode} setDarkMode={setDarkMode} />
           </View>
         </View>
+        </CajaProvider>
+
       </AuthProvider>
     </GestureHandlerRootView>
   );
