@@ -14,10 +14,11 @@ import {
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 
-import InputField from "./InputField";
-import BrandCarousel from "./BrandCarousel";
-import { calcularValores, ValoresEntrada } from "../../utils/calculadora";
-import { formatNumber } from "../../utils/format";
+import InputField from "../../components/InputField";
+import BrandCarousel from "../../components/BrandCarousel";
+import { calcularValores, ValoresEntrada } from "../../../utils/calculadora";
+import { formatNumber } from "../../../utils/format";
+import { useCaja } from "../../../context/CajaContext";
 
 type Props = {
   darkMode: boolean;
@@ -63,41 +64,40 @@ export default function Content({ darkMode }: Props): JSX.Element {
     try {
       const htmlContent = `
         <html>
-         <head>
-  <style>
-    @page {
-      size: 40mm 60mm;
-      margin: 0;
-    }
-    body {
-      font-family: sans-serif;
-      width: 40mm;
-      height: 60mm;
-      padding: 8px;
-      font-size: 12px;
-      box-sizing: border-box;
-      margin: 0;
-    }
-    h2 {
-      text-align: center;
-      font-size: 14px;
-      margin-bottom: 4px;
-    }
-    .section {
-      margin-bottom: 4px;
-    }
-    .bold {
-      font-weight: bold;
-    }
-    .center {
-      text-align: center;
-    }
-    hr {
-      margin: 4px 0;
-    }
-  </style>
-</head>
-
+          <head>
+            <style>
+              @page {
+                size: 40mm 60mm;
+                margin: 0;
+              }
+              body {
+                font-family: sans-serif;
+                width: 40mm;
+                height: 60mm;
+                padding: 8px;
+                font-size: 12px;
+                box-sizing: border-box;
+                margin: 0;
+              }
+              h2 {
+                text-align: center;
+                font-size: 14px;
+                margin-bottom: 4px;
+              }
+              .section {
+                margin-bottom: 4px;
+              }
+              .bold {
+                font-weight: bold;
+              }
+              .center {
+                text-align: center;
+              }
+              hr {
+                margin: 4px 0;
+              }
+            </style>
+          </head>
           <body>
             <h2>Recibo de Cálculo</h2>
             <hr />
@@ -117,21 +117,22 @@ export default function Content({ darkMode }: Props): JSX.Element {
           </body>
         </html>
       `;
-
+  
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
-
+  
       const isAvailable = await Sharing.isAvailableAsync();
       if (!isAvailable) {
         alert("Compartir no está disponible en este dispositivo.");
         return;
       }
-
+  
       await Sharing.shareAsync(uri);
     } catch (error) {
       console.error("Error al generar o compartir el recibo:", error);
       Alert.alert("Error", "No se pudo generar ni compartir el recibo.");
     }
   }
+  
 
   const clearAll = () => {
     setInputs({

@@ -9,6 +9,7 @@ import {
   Image,
   FlatList,
   Platform,
+  Switch,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -17,19 +18,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
   darkMode: boolean;
+  setDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export default function Footer({ darkMode }: Props): JSX.Element {
+export default function Footer({ darkMode, setDarkMode }: Props): JSX.Element {
   const { bottom } = useSafeAreaInsets();
-
   const [visibleModal, setVisibleModal] = useState<null | "inicio" | "historial" | "ajustes">(null);
-
-  // Common states
   const [textInputs, setTextInputs] = useState<string[]>(["", "", ""]);
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-
-  // Images for inicio modal
   const [images, setImages] = useState<(string | null)[]>([null, null]);
 
   const pickImage = async (index: number) => {
@@ -61,8 +58,6 @@ export default function Footer({ darkMode }: Props): JSX.Element {
   const renderInicio = () => (
     <View>
       <Text className="text-lg font-semibold text-center mb-4">Inicio</Text>
-  
-      {/* Campos de texto adicionales */}
       {[0, 1, 2].map((idx) => (
         <TextInput
           key={`inicio-text-${idx}`}
@@ -76,8 +71,6 @@ export default function Footer({ darkMode }: Props): JSX.Element {
           }}
         />
       ))}
-  
-      {/* Imágenes en fila */}
       <View className="flex-row justify-between gap-2">
         {[0, 1].map((idx) => (
           <View key={idx} className="w-1/2 mb-4">
@@ -89,7 +82,7 @@ export default function Footer({ darkMode }: Props): JSX.Element {
                 Seleccionar Imagen {idx + 1}
               </Text>
             </TouchableOpacity>
-  
+
             {images[idx] && (
               <View className="relative">
                 <Image
@@ -110,7 +103,6 @@ export default function Footer({ darkMode }: Props): JSX.Element {
       </View>
     </View>
   );
-  
 
   const renderHistorial = () => {
     const data = [
@@ -173,6 +165,12 @@ export default function Footer({ darkMode }: Props): JSX.Element {
           }}
         />
       )}
+
+      {/* Toggle dark mode */}
+      <View className="flex-row justify-between items-center mt-4">
+        <Text className="text-base">Modo Oscuro</Text>
+        <Switch value={darkMode} onValueChange={setDarkMode} />
+      </View>
     </View>
   );
 
@@ -225,7 +223,6 @@ export default function Footer({ darkMode }: Props): JSX.Element {
         <View className="flex-1 justify-center items-center bg-black bg-opacity-50 px-4">
           <View className="bg-white p-6 rounded-xl w-full max-w-md">
             {renderModalContent()}
-
             <Pressable
               onPress={() => {
                 setVisibleModal(null);

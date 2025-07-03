@@ -1,4 +1,3 @@
-// src/components/ui/card.tsx
 import React from "react";
 import { cn } from "../../utils/utils";
 
@@ -17,3 +16,11 @@ export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHead
 export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return <div className={cn("text-sm", className)} {...props} />;
 }
+
+// ✅ Agrega exportación por defecto
+export default {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+};

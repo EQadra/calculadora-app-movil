@@ -26,7 +26,7 @@ export default function HistorialDiario({ darkMode }: { darkMode: boolean }) {
               <View style={[styles.card, { backgroundColor: darkMode ? "#111" : "#fff" }]}>
                 <Text style={[styles.label, { color: darkMode ? "white" : "black" }]}>Hora: {item.hora}</Text>
                 <Text style={[styles.label, { color: darkMode ? "white" : "black" }]}>
-                  Gramos: {item.gramos.toFixed(2)}g
+                  Gramos: {formatNumber(item.gramos)}g
                 </Text>
                 <Text style={[styles.label, { color: darkMode ? "white" : "black" }]}>
                   Precio por gramo: S/{formatNumber(item.precioGramo)}

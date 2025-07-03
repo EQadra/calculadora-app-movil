@@ -15,3 +15,6 @@ export function Badge({ className, variant = "default", ...props }: BadgeProps) 
 
   return <span className={cn(base, variants[variant], className)} {...props} />;
 }
+
+// ✅ Exportación por defecto requerida
+export default Badge;

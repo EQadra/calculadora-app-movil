@@ -1,4 +1,3 @@
-// src/components/ui/data-table.tsx
 import React from "react";
 
 interface Column {
@@ -39,3 +38,6 @@ export const DataTable: React.FC<DataTableProps> = ({ columns, data }) => {
     </div>
   );
 };
+
+// ✅ Esto elimina el warning
+export default DataTable;
