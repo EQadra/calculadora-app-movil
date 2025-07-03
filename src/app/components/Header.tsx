@@ -63,10 +63,10 @@ const Header = ({ darkMode, setDarkMode }: { darkMode: boolean; setDarkMode: (va
   const [menuVisible, setMenuVisible] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [searchVisible, setSearchVisible] = useState(false);
-  const [notificationsVisible, setNotificationsVisible] = useState(false);
+  const [cartVisible, setCartVisible] = useState(false);
+  const [searchText, setSearchText] = useState("");
 
   const [slideAnim] = useState(new Animated.Value(-250));
-  const [notifAnim] = useState(new Animated.Value(SCREEN_WIDTH));
 
   const toggleMenu = () => (menuVisible ? closeMenu() : openMenu());
   const openMenu = () =>
@@ -85,40 +85,19 @@ const Header = ({ darkMode, setDarkMode }: { darkMode: boolean; setDarkMode: (va
       useNativeDriver: true,
     }).start(() => setMenuVisible(false));
 
-  const openNotifications = () => {
-    setNotificationsVisible(true);
-    Animated.timing(notifAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const closeNotifications = () => {
-    Animated.timing(notifAnim, {
-      toValue: SCREEN_WIDTH,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => setNotificationsVisible(false));
-  };
-
   const toggleSection = (title: string) =>
     setExpanded((prev) => ({ ...prev, [title]: !prev[title] }));
 
-  const notifications = Array.from({ length: 5 }).map((_, i) => ({
-    id: `${i}`,
-    title: `Notificación ${i + 1}`,
-    detail: `Actualización importante del producto ${i + 1}.`,
-    date: `2025-06-${10 + i}`,
-    image: `https://picsum.photos/40?random=${i + 1}`,
-  }));
-
-  const products = Array.from({ length: 6 }).map((_, i) => ({
+  const products = Array.from({ length: 12 }).map((_, i) => ({
     id: `${i}`,
     title: `Producto ${i + 1}`,
     description: `Descripción del producto número ${i + 1}.`,
     image: `https://picsum.photos/200?random=${i + 10}`,
   }));
+
+  const filteredProducts = products.filter((p) =>
+    p.title.toLowerCase().includes(searchText.toLowerCase())
+  );
 
   return (
     <View style={{ paddingTop: top }} className="z-10">
@@ -139,8 +118,8 @@ const Header = ({ darkMode, setDarkMode }: { darkMode: boolean; setDarkMode: (va
           <TouchableOpacity onPress={() => setSearchVisible(true)}>
             <Text className="text-white text-xl">🔍</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={openNotifications}>
-            <Text className="text-white text-xl">🔔</Text>
+          <TouchableOpacity onPress={() => setCartVisible(true)}>
+            <Text className="text-white text-xl">🛒</Text>
           </TouchableOpacity>
           <Text className="text-white">{darkMode ? "🌙" : "☀️"}</Text>
           <Switch
@@ -246,58 +225,44 @@ const Header = ({ darkMode, setDarkMode }: { darkMode: boolean; setDarkMode: (va
         </View>
       </Modal>
 
-      {/* PANEL DE NOTIFICACIONES */}
-      <Animated.View
-        style={{
-          transform: [{ translateX: notifAnim }],
-          position: "absolute",
-          top: top + 48,
-          right: 0,
-          width: "75%",
-          height: SCREEN_HEIGHT - top,
-          backgroundColor: "#f1f5f9",
-          paddingHorizontal: 16,
-          paddingVertical: 20,
-          zIndex: 100,
-        }}
-      >
-        <View className="flex-row justify-between items-center mb-4">
-          <Text className="text-lg font-bold text-gray-800">Notificaciones</Text>
-          <TouchableOpacity onPress={closeNotifications}>
-            <Text className="text-gray-600 text-lg">✖️</Text>
-          </TouchableOpacity>
-        </View>
-        <FlatList
-          data={notifications}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View className="bg-white rounded-xl shadow p-4 mb-4 flex-row items-start">
-              <Image source={{ uri: item.image }} style={{ width: 40, height: 40, borderRadius: 20 }} />
-              <View className="ml-4 flex-1">
-                <Text className="font-semibold text-base text-gray-800">{item.title}</Text>
-                <Text className="text-sm text-gray-600">{item.detail}</Text>
-                <Text className="text-xs text-gray-400 mt-1">{item.date}</Text>
-              </View>
-            </View>
-          )}
-        />
-      </Animated.View>
+      {/* MODAL DE CARRITO */}
+      <Modal visible={cartVisible} animationType="slide">
+        <View className="flex-1 bg-white pt-14 px-4">
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-xl font-bold">Tienda</Text>
+            <TouchableOpacity onPress={() => setCartVisible(false)}>
+              <Text className="text-red-600 text-lg">Cerrar ✖️</Text>
+            </TouchableOpacity>
+          </View>
 
-      {notificationsVisible && (
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={closeNotifications}
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.4)",
-            zIndex: 50,
-          }}
-        />
-      )}
+          <TextInput
+            placeholder="Buscar productos..."
+            className="border border-gray-300 rounded-lg px-4 py-2 mb-4"
+            value={searchText}
+            onChangeText={setSearchText}
+          />
+
+          <FlatList
+            data={filteredProducts}
+            keyExtractor={(item) => item.id}
+            numColumns={3}
+            columnWrapperStyle={{ justifyContent: "space-between", marginBottom: 16 }}
+            renderItem={({ item }) => (
+              <View style={{ width: "30%" }} className="bg-gray-100 p-2 rounded-lg">
+                <Image
+                  source={{ uri: item.image }}
+                  style={{ width: "100%", height: 80, borderRadius: 8 }}
+                  resizeMode="cover"
+                />
+                <Text className="text-sm font-semibold mt-2">{item.title}</Text>
+                <TouchableOpacity className="bg-green-600 mt-2 py-1 px-2 rounded-lg">
+                  <Text className="text-white text-xs text-center">Agregar</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          />
+        </View>
+      </Modal>
     </View>
   );
 };

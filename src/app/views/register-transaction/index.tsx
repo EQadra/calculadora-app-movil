@@ -260,7 +260,6 @@ export default function Content({ darkMode }: Props): JSX.Element {
       <Modal visible={showModal} animationType="slide" transparent onRequestClose={() => setShowModal(false)}>
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: darkMode ? "#111" : "white" }]}>
-            <Image source={require("../../../assets/Logo.png")} style={{ width: 38, height: 40, marginBottom: 12 }} />
 
             <Text style={[styles.modalTitle, { color: darkMode ? "white" : "black" }]}>
               Recibo de Cálculo

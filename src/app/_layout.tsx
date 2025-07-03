@@ -25,7 +25,6 @@ export default function RootLayout() {
 
             {/* STACK DE NAVEGACIÓN */}
             <Stack>
-              <Stack.Screen name="auth/home" options={{ headerShown: false }} />
               <Stack.Screen name="auth/profile" options={{ headerShown: false }} />
               <Stack.Screen name="auth/forgot-password" options={{ headerShown: false }} />
               <Stack.Screen name="auth/reset-password" options={{ headerShown: false }} />
@@ -41,7 +40,7 @@ export default function RootLayout() {
 
             {/* FOOTER */}
             <View style={styles.footer}>
-              {/* <Footer darkMode={darkMode} setDarkMode={setDarkMode} /> */}
+              <Footer darkMode={darkMode} setDarkMode={setDarkMode} />
             </View>
           </View>
         </CajaProvider>
