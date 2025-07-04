@@ -7,7 +7,6 @@
     "userInterfaceStyle": "automatic",
     "orientation": "default",
     "version": "1.0.0",
-    "edgeToEdge": true,
     "android": {
       "package": "com.ecuadra.myapp",
       "versionCode": 1,

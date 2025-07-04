@@ -197,26 +197,7 @@ export default function Content({ darkMode }: Props): JSX.Element {
           darkMode={darkMode}
         />
 
-        {valido && (
-          <View
-            style={{
-              backgroundColor: darkMode ? "#222" : "#f0f0f0",
-              borderRadius: 5,
-              padding: 16,
-              marginTop: 6,
-            }}
-          >
-            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
-              Precio por gramo (USD): {formatNumber(pricePerGramUSD)}
-            </Text>
-            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
-              Precio por gramo (PEN): {formatNumber(pricePerGramPEN)}
-            </Text>
-            <Text style={{ color: darkMode ? "white" : "black" }}>
-              Total en PEN: {formatNumber(totalPEN)}
-            </Text>
-          </View>
-        )}
+
 
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 12 }}>
           <TouchableOpacity
@@ -268,22 +249,24 @@ export default function Content({ darkMode }: Props): JSX.Element {
             <Text style={styles.modalSubText}>BMG Electronics</Text>
             <Text style={styles.modalSubText}>Av Rafael Escardó 1143, San Miguel</Text>
             <Text style={styles.modalSubText}>Número de Contacto: 912 184 269</Text>
-            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
-              Total   gramos : {grams}
-            </Text>
+           
 
             <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
-              Precio por gramo (USD): {formatNumber(pricePerGramUSD)}
-            </Text>
-            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
-              Precio por gramo (PEN): {formatNumber(pricePerGramPEN)}
-            </Text>
-            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
-              Total en USD: {formatNumber(totalUSD)}
-            </Text>
-            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
-              Total en PEN: {formatNumber(totalPEN)}
-            </Text>
+                Precio por gramo (USD): {formatNumber(pricePerGramUSD)}
+              </Text>
+              <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
+                Precio por gramo (PEN): {formatNumber(pricePerGramPEN)}
+              </Text>
+              <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
+                Gramos calculados: {formatNumber(Number(inputs.grams))} g
+              </Text>
+              <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
+                Total en USD: {formatNumber(totalUSD)}
+              </Text>
+              <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
+                Total en PEN: {formatNumber(totalPEN)}
+              </Text>
+
 
             <View style={styles.modalButtonRow}>
               <TouchableOpacity

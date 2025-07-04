@@ -4,7 +4,7 @@ export const formatNumber = (
   const number = Number(n);
   if (isNaN(number)) return "–";
 
-  const formatter = new Intl.NumberFormat("fr-FR", {
+  const formatter = new Intl.NumberFormat("es-ES", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
     useGrouping: true,

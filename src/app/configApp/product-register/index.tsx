@@ -15,7 +15,7 @@ import {
 import { useProducts } from '../../../context/ProductContext';
 import * as ImagePicker from 'expo-image-picker';
 
-const ProductScreen: React.FC = () => {
+const ProductRegisterScreen: React.FC = () => {
   const { products, fetchAll, create, update, remove } = useProducts();
 
   const [showModal, setShowModal] = useState(false);
@@ -200,7 +200,7 @@ const ProductScreen: React.FC = () => {
   );
 };
 
-export default ProductScreen;
+export default ProductRegisterScreen;
 
 const styles = StyleSheet.create({
   container: {

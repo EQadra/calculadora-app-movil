@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "reac
 import { Picker } from "@react-native-picker/picker";
 import { useRouter } from "expo-router";
 
-export default function ProfileAdminScreen() {
+export default function NuevoUsuario() {
   const router = useRouter();
   const [form, setForm] = useState({
     name: "",

@@ -3,41 +3,50 @@ import {
   View,
   Text,
   Image,
-  TextInput,
   TouchableOpacity,
   Animated,
   Easing,
   Switch,
-  Alert,
   Dimensions,
-  Modal,
   FlatList,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import logo from '../../../assets/Logo.png'; // Ajusta la ruta si estás en una subcarpeta
+import { useRouter } from "expo-router";
+import logo from "../../../assets/Logo.png";
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("window");
 
-const CustomIcon = ({ path }) => (
+const CustomIcon = ({ path }: { path: string }) => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path d={path} fill="#fff" />
   </Svg>
 );
 
 const newsItems = [
-  { id: "1", title: "Nueva promoción disponible", description: "Obtén 20% de descuento en productos seleccionados." },
-  { id: "2", title: "Horario extendido", description: "Ahora atendemos hasta las 10 PM todos los días." },
-  { id: "3", title: "Lanzamiento de nuevos productos", description: "Descubre nuestra nueva línea de tecnología." },
+  { id: "1", title: "Nueva promoción", description: "20% de descuento en productos seleccionados." },
+  { id: "2", title: "Horario extendido", description: "Abrimos hasta las 10 PM." },
+  { id: "3", title: "Nuevos productos", description: "Línea de tecnología lanzada." },
 ];
 
-const Header = ({ darkMode, setDarkMode }) => {
+type SectionItem = {
+  title: string;
+  path: string;
+  route: string;
+};
+
+type Section = {
+  title: string;
+  items: SectionItem[];
+};
+
+const Header = ({ darkMode, setDarkMode }: { darkMode: boolean; setDarkMode: (value: boolean) => void }) => {
   const { top } = useSafeAreaInsets();
+  const router = useRouter();
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [notificationsVisible, setNotificationsVisible] = useState(false);
-  const [expanded, setExpanded] = useState({});
-
+  const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
   const [slideAnim] = useState(new Animated.Value(-250));
   const [notifAnim] = useState(new Animated.Value(SCREEN_WIDTH));
 
@@ -50,7 +59,6 @@ const Header = ({ darkMode, setDarkMode }) => {
       useNativeDriver: true,
     }).start(() => setMenuVisible(true));
   };
-
   const closeMenu = () => {
     Animated.timing(slideAnim, {
       toValue: -250,
@@ -69,7 +77,6 @@ const Header = ({ darkMode, setDarkMode }) => {
       useNativeDriver: true,
     }).start(() => setNotificationsVisible(true));
   };
-
   const closeNotifications = () => {
     Animated.timing(notifAnim, {
       toValue: SCREEN_WIDTH,
@@ -79,24 +86,54 @@ const Header = ({ darkMode, setDarkMode }) => {
     }).start(() => setNotificationsVisible(false));
   };
 
-  const toggleSection = (title) =>
+  const toggleSection = (title: string) => {
     setExpanded((prev) => ({ ...prev, [title]: !prev[title] }));
+  };
 
-  const sections = [
+  const sections: Section[] = [
     {
       title: "General",
       items: [
-        { title: "Dashboard", path: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4" },
-        { title: "Transacciones", path: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" },
-        { title: "Anuncios", path: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" },
+        {
+          title: "Dashboard",
+          path: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4",
+          route: "views/reports",
+        },
+        {
+          title: "Transacciones",
+          path: "M15 17h5l-1.405-1.405M13 7h4l-1.405-1.405M6 17h2a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z",
+          route: "configApp/transactions",
+        },
+        {
+          title: "Anuncios",
+          path: "M9 17v-2a4 4 0 014-4h5m-7 6l4 4m0-4l-4 4",
+          route: "configApp/product-register",
+        },
       ],
     },
     {
       title: "Cuenta",
       items: [
-        { title: "Store", path: "M12 12c2.28 0 4-1.72 4-4s-1.72-4-4-4-4 1.72-4 4 1.72 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" },
-        { title: "Notificaciones", path: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1h6z" },
-        { title: "Cerrar sesión", path: "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1m0-10V5m0 14a9 9 0 100-18" },
+        {
+          title: "Store",
+          path: "M3 3h18v18H3V3z",
+          route: "views/daily-history",
+        },
+        {
+          title: "Perfil Admin",
+          path: "M12 12c2.28 0 4-1.72 4-4s-1.72-4-4-4-4 1.72-4 4 1.72 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
+          route: "configApp/profile_admin",
+        },
+        {
+          title: "Perfil Usuario",
+          path: "M12 12c2.28 0 4-1.72 4-4s-1.72-4-4-4-4 1.72-4 4 1.72 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
+          route: "configApp/profile_user",
+        },
+        {
+          title: "Cerrar sesión",
+          path: "M17 16l4-4m0 0l-4-4m4 4H7",
+          route: "auth/login",
+        },
       ],
     },
   ];
@@ -108,10 +145,7 @@ const Header = ({ darkMode, setDarkMode }) => {
           <TouchableOpacity onPress={toggleMenu}>
             <Text className="text-white text-xl">{menuVisible ? "✖️" : "☰"}</Text>
           </TouchableOpacity>
-          <Image
-            source={logo}
-            style={{ width: 24, height: 24 }}
-          />
+          <Image source={logo} style={{ width: 24, height: 24 }} />
           <Text className="text-white font-bold text-sm">BMG Electronics</Text>
         </View>
 
@@ -129,7 +163,7 @@ const Header = ({ darkMode, setDarkMode }) => {
         </View>
       </View>
 
-      {/* MENÚ IZQUIERDO */}
+      {/* Menú lateral */}
       <Animated.View
         style={{
           transform: [{ translateX: slideAnim }],
@@ -157,7 +191,7 @@ const Header = ({ darkMode, setDarkMode }) => {
                   key={i}
                   className="flex-row items-center gap-3 py-2 pl-4"
                   onPress={() => {
-                    Alert.alert(item.title);
+                    router.push(`/${item.route}`);
                     closeMenu();
                   }}
                 >
@@ -172,7 +206,7 @@ const Header = ({ darkMode, setDarkMode }) => {
         <Text className="text-center text-gray-400 text-sm mt-6">Versión 1.0.0</Text>
       </Animated.View>
 
-      {/* ASIDE DERECHO DE NOTIFICACIONES */}
+      {/* Panel de notificaciones */}
       <Animated.View
         style={{
           transform: [{ translateX: notifAnim }],

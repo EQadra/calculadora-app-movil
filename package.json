@@ -2,6 +2,7 @@
   "name": "my-app",
   "version": "1.0.0",
   "main": "expo-router/entry",
+  "private": true,
   "scripts": {
     "start": "expo start --dev-client",
     "android": "expo run:android",
@@ -53,5 +54,15 @@
   "resolutions": {
     "react-native-svg": "13.9.0"
   },
-  "private": true
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-native-fs",
+          "react-native-html-to-pdf"
+        ],
+        "listUnknownPackages": false
+      }
+    }
+  }
 }
