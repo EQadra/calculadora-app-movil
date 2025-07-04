@@ -17,13 +17,13 @@ const CustomButton: React.FC<CustomButtonProps> = ({ title, onPress }) => {
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: "#86EFAC", // verde pastel claro
+    backgroundColor: "#1E90FF", // verde pastel claro
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
   },
   text: {
-    color: "#065F46", // verde oscuro para contraste
+    color: "#000000", // verde oscuro para contraste
     fontSize: 16,
     fontWeight: "600",
   },

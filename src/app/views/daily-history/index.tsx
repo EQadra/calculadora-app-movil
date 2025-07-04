@@ -1,19 +1,39 @@
 import React from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
-import { useCaja } from "../../../context/CajaContext";
 import { formatNumber } from "../../../utils/format";
 
 export default function HistorialDiario({ darkMode }: { darkMode: boolean }) {
-  const { transacciones } = useCaja();
+  const transacciones = [
+    {
+      id: "1",
+      hora: "09:15 AM",
+      gramos: 10,
+      precioGramo: 220,
+      totalPEN: 2200,
+    },
+  ];
 
   const totalDelDia = transacciones.reduce((sum, t) => sum + t.totalPEN, 0);
 
   return (
-    <View style={[styles.container, { backgroundColor: darkMode ? "#000" : "#eaf4ff" }]}>
-      <Text style={[styles.titulo, { color: darkMode ? "white" : "black" }]}>Historial Diario</Text>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: darkMode ? "#000" : "#eaf4ff" },
+      ]}
+    >
+      <Text style={[styles.titulo, { color: darkMode ? "white" : "black" }]}>
+        Historial Diario
+      </Text>
 
       {transacciones.length === 0 ? (
-        <Text style={{ color: darkMode ? "white" : "black", textAlign: "center", marginTop: 20 }}>
+        <Text
+          style={{
+            color: darkMode ? "white" : "black",
+            textAlign: "center",
+            marginTop: 20,
+          }}
+        >
           No hay transacciones registradas hoy.
         </Text>
       ) : (
@@ -23,23 +43,51 @@ export default function HistorialDiario({ darkMode }: { darkMode: boolean }) {
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingBottom: 100 }}
             renderItem={({ item }) => (
-              <View style={[styles.card, { backgroundColor: darkMode ? "#111" : "#fff" }]}>
-                <Text style={[styles.label, { color: darkMode ? "white" : "black" }]}>Hora: {item.hora}</Text>
-                <Text style={[styles.label, { color: darkMode ? "white" : "black" }]}>
+              <View
+                style={[
+                  styles.card,
+                  { backgroundColor: darkMode ? "#111" : "#fff" },
+                ]}
+              >
+                <Text
+                  style={[styles.label, { color: darkMode ? "white" : "black" }]}
+                >
+                  Hora: {item.hora}
+                </Text>
+                <Text
+                  style={[styles.label, { color: darkMode ? "white" : "black" }]}
+                >
                   Gramos: {formatNumber(item.gramos)}g
                 </Text>
-                <Text style={[styles.label, { color: darkMode ? "white" : "black" }]}>
+                <Text
+                  style={[styles.label, { color: darkMode ? "white" : "black" }]}
+                >
                   Precio por gramo: S/{formatNumber(item.precioGramo)}
                 </Text>
-                <Text style={[styles.label, { color: darkMode ? "#0f0" : "#008000", fontWeight: "bold" }]}>
+                <Text
+                  style={[
+                    styles.label,
+                    {
+                      color: darkMode ? "#0f0" : "#008000",
+                      fontWeight: "bold",
+                    },
+                  ]}
+                >
                   Total: S/{formatNumber(item.totalPEN)}
                 </Text>
               </View>
             )}
           />
 
-          <View style={[styles.totalContainer, { backgroundColor: darkMode ? "#222" : "#dff0d8" }]}>
-            <Text style={[styles.totalTexto, { color: darkMode ? "white" : "#333" }]}>
+          <View
+            style={[
+              styles.totalContainer,
+              { backgroundColor: darkMode ? "#222" : "#dff0d8" },
+            ]}
+          >
+            <Text
+              style={[styles.totalTexto, { color: darkMode ? "white" : "#333" }]}
+            >
               Total del día: S/{formatNumber(totalDelDia)}
             </Text>
           </View>

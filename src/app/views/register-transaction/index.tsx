@@ -62,60 +62,61 @@ export default function Content({ darkMode }: Props): JSX.Element {
   }) {
     try {
       const htmlContent = `
-        <html>
-          <head>
-            <style>
-              @page {
-                size: 40mm 60mm;
-                margin: 0;
-              }
-              body {
-                font-family: sans-serif;
-                width: 40mm;
-                height: 60mm;
-                padding: 8px;
-                font-size: 12px;
-                box-sizing: border-box;
-                margin: 0;
-              }
-              h2 {
-                text-align: center;
-                font-size: 14px;
-                margin-bottom: 4px;
-              }
-              .section {
-                margin-bottom: 4px;
-              }
-              .bold {
-                font-weight: bold;
-              }
-              .center {
-                text-align: center;
-              }
-              hr {
-                margin: 4px 0;
-              }
-            </style>
-          </head>
-          <body>
-            <h2>Recibo de Cálculo</h2>
-            <hr />
-            <div class="center">
-              <div class="bold">BMG Electronics</div>
-              <div>Av Rafael Escardó 1143, San Miguel</div>
-              <div>Tel: 912 184 269</div>
-            </div>
-            <hr />
-            <div class="section">💰 Precio x gramo (USD): <span class="bold">$${pricePerGramUSD.toFixed(2)}</span></div>
-            <div class="section">💰 Precio x gramo (PEN): <span class="bold">S/${pricePerGramPEN.toFixed(2)}</span></div>
-            <div class="section">⚖️ Gramos: <span class="bold">${grams.toFixed(2)} g</span></div>
-            <div class="section">💵 Total USD: <span class="bold">$${totalUSD.toFixed(2)}</span></div>
-            <div class="section">💵 Total PEN: <span class="bold">S/${totalPEN.toFixed(2)}</span></div>
-            <hr />
-            <div class="center">Gracias por su preferencia</div>
-          </body>
-        </html>
-      `;
+  <html>
+    <head>
+      <style>
+        @page {
+          size: 40mm 60mm;
+          margin: 0;
+        }
+        body {
+          font-family: sans-serif;
+          width: 40mm;
+          height: 60mm;
+          padding: 8px;
+          font-size: 12px;
+          box-sizing: border-box;
+          margin: 0;
+        }
+        h2 {
+          text-align: center;
+          font-size: 14px;
+          margin-bottom: 4px;
+        }
+        .section {
+          margin-bottom: 4px;
+        }
+        .bold {
+          font-weight: bold;
+        }
+        .center {
+          text-align: center;
+        }
+        hr {
+          margin: 4px 0;
+        }
+      </style>
+    </head>
+    <body>
+      <h2>Recibo de Cálculo</h2>
+      <hr />
+      <div class="center">
+        <div class="bold">BMG Electronics</div>
+        <div>Av Rafael Escardó 1143, San Miguel</div>
+        <div>Tel: 912 184 269</div>
+      </div>
+      <hr />
+      <div class="section">💰 Precio x gramo (USD): <span class="bold">$${formatNumber(pricePerGramUSD)}</span></div>
+      <div class="section">💰 Precio x gramo (PEN): <span class="bold">S/${formatNumber(pricePerGramPEN)}</span></div>
+      <div class="section">⚖️ Gramos: <span class="bold">${formatNumber(grams)} g</span></div>
+      <div class="section">💵 Total USD: <span class="bold">$${formatNumber(totalUSD)}</span></div>
+      <div class="section">💵 Total PEN: <span class="bold">S/${formatNumber(totalPEN)}</span></div>
+      <hr />
+      <div class="center">Gracias por su preferencia</div>
+    </body>
+  </html>
+`;
+
   
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
   
@@ -267,6 +268,9 @@ export default function Content({ darkMode }: Props): JSX.Element {
             <Text style={styles.modalSubText}>BMG Electronics</Text>
             <Text style={styles.modalSubText}>Av Rafael Escardó 1143, San Miguel</Text>
             <Text style={styles.modalSubText}>Número de Contacto: 912 184 269</Text>
+            <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
+              Total   gramos : {grams}
+            </Text>
 
             <Text style={{ color: darkMode ? "white" : "black", marginBottom: 8 }}>
               Precio por gramo (USD): {formatNumber(pricePerGramUSD)}

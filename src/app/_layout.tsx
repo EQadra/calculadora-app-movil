@@ -5,6 +5,8 @@ import { Stack } from "expo-router";
 import { View, StyleSheet } from "react-native";
 import { AuthProvider } from "../context/AuthProvider";
 import { CajaProvider } from "../context/CajaContext";
+import { TransaccionesProvider } from "../context/TransaccionesContext"; // ✅ Corrección aquí
+
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import Footer from "./components/Footer";
@@ -17,32 +19,34 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <CajaProvider>
-          <View style={styles.container}>
-            {/* HEADER */}
-            <View style={styles.footer}>
-              <Header darkMode={darkMode} setDarkMode={setDarkMode} />
-            </View>
+          <TransaccionesProvider>
+            <View style={styles.container}>
+              {/* HEADER */}
+              <View style={styles.footer}>
+                <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+              </View>
 
-            {/* STACK DE NAVEGACIÓN */}
-            <Stack>
-              <Stack.Screen name="auth/profile" options={{ headerShown: false }} />
-              <Stack.Screen name="auth/forgot-password" options={{ headerShown: false }} />
-              <Stack.Screen name="auth/reset-password" options={{ headerShown: false }} />
-              <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-              <Stack.Screen name="auth/signup" options={{ headerShown: false }} />
-              <Stack.Screen name="configApp/profile_admin" options={{ headerShown: false }} />
-              <Stack.Screen name="configApp/profile_user" options={{ headerShown: false }} />
-              <Stack.Screen name="views/reports" options={{ headerShown: false }} />
-              <Stack.Screen name="views/register-transaction" options={{ headerShown: false }} />
-              <Stack.Screen name="views/daily-history" options={{ headerShown: false }} />
-              <Stack.Screen name="views/open-register" options={{ headerShown: false }} />
-            </Stack>
+              {/* STACK DE NAVEGACIÓN */}
+              <Stack>
+                <Stack.Screen name="auth/profile" options={{ headerShown: false }} />
+                <Stack.Screen name="auth/forgot-password" options={{ headerShown: false }} />
+                <Stack.Screen name="auth/reset-password" options={{ headerShown: false }} />
+                <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+                <Stack.Screen name="auth/signup" options={{ headerShown: false }} />
+                <Stack.Screen name="configApp/profile_admin" options={{ headerShown: false }} />
+                <Stack.Screen name="configApp/profile_user" options={{ headerShown: false }} />
+                <Stack.Screen name="views/reports" options={{ headerShown: false }} />
+                <Stack.Screen name="views/register-transaction" options={{ headerShown: false }} />
+                <Stack.Screen name="views/daily-history" options={{ headerShown: false }} />
+                <Stack.Screen name="views/open-register" options={{ headerShown: false }} />
+              </Stack>
 
-            {/* FOOTER */}
-            <View style={styles.footer}>
-              <Footer darkMode={darkMode} setDarkMode={setDarkMode} />
+              {/* FOOTER */}
+              <View style={styles.footer}>
+                <Footer darkMode={darkMode} setDarkMode={setDarkMode} />
+              </View>
             </View>
-          </View>
+          </TransaccionesProvider>
         </CajaProvider>
       </AuthProvider>
     </GestureHandlerRootView>

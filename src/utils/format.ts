@@ -1,9 +1,14 @@
-export const formatNumber = (n: number | string | null | undefined): string => {
+export const formatNumber = (
+  n: number | string | null | undefined
+): string => {
   const number = Number(n);
-  if (isNaN(number)) return "–"; // Devuelve un guión si el número no es válido
+  if (isNaN(number)) return "–";
 
-  return number.toLocaleString("es-PE", {
+  const formatter = new Intl.NumberFormat("fr-FR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
+    useGrouping: true,
   });
+
+  return formatter.format(number).replace(/\u00A0/g, " "); // reemplaza espacio no separable por espacio normal
 };

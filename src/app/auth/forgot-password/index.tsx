@@ -9,16 +9,15 @@ export default function ForgotPasswordScreen(): JSX.Element {
   const handlePasswordRecovery = async (): Promise<void> => {
     try {
       if (!email) {
-        Alert.alert("Error", "Please enter your email.");
+        Alert.alert("Error", "Por favor ingresa tu correo electrónico.");
         return;
       }
 
-      // Simulación de envío
-      Alert.alert("Success", `A password recovery link has been sent to ${email}.`);
+      Alert.alert("Éxito", `Se ha enviado un enlace de recuperación a ${email}.`);
       router.push("/auth/login");
     } catch (error) {
-      console.error("Error sending recovery email:", error);
-      Alert.alert("Error", "There was a problem sending the recovery email.");
+      console.error("Error al enviar el correo de recuperación:", error);
+      Alert.alert("Error", "Hubo un problema al enviar el correo de recuperación.");
     }
   };
 
@@ -28,18 +27,18 @@ export default function ForgotPasswordScreen(): JSX.Element {
 
       <TextInput
         style={styles.input}
-        placeholder="Enter your email"
+        placeholder="Ingresa tu correo electrónico"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
-        placeholderTextColor="#6B8E23"
+        placeholderTextColor="#5A7FA0"
       />
 
-      <Button title="Send Recovery Email" onPress={handlePasswordRecovery} />
+      <Button title="Enviar correo de recuperación" onPress={handlePasswordRecovery} />
 
       <Text style={styles.link} onPress={() => router.push("/auth/login")}>
-        Back to Login
+        Volver al inicio de sesión
       </Text>
     </View>
   );
@@ -50,28 +49,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 20,
-    backgroundColor: "#DFF5E1", // Verde pastel
+    backgroundColor: "#E0F0FF", // Azul claro de fondo
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 20,
-    color: "#2F4F4F",
+    color: "#003366", // Azul oscuro
   },
   input: {
     height: 50,
-    borderColor: "#A3D9A5",
+    borderColor: "#99CCF3", // Borde azul suave
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,
-    backgroundColor: "#E9F7EF",
-    color: "#2F4F4F",
+    backgroundColor: "#F0F8FF", // Fondo azul muy claro
+    color: "#003366",
     marginBottom: 15,
   },
   link: {
     textAlign: "center",
-    color: "#388E3C",
+    color: "#1E90FF", // Azul brillante
     marginTop: 20,
     fontSize: 16,
   },

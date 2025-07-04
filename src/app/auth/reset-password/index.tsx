@@ -26,7 +26,7 @@ export default function ResetPasswordScreen(): JSX.Element {
   };
 
   return (
-    <View className="flex-1 justify-center p-5 bg-green-100">
+    <View className="flex-1 justify-center p-5 bg-blue-100">
       <Text className="text-2xl font-bold text-center mb-5">
         Reset Password
       </Text>
