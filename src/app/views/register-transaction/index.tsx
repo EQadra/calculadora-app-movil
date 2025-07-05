@@ -66,7 +66,7 @@ export default function Content({ darkMode }: Props): JSX.Element {
     <head>
       <style>
         @page {
-          size: 40mm 60mm;
+          size: 80mm 10mm;
           margin: 0;
         }
         body {
