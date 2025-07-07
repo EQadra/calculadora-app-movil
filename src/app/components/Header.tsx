@@ -13,36 +13,60 @@ import {
 import Svg, { Path } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useDarkMode } from "../../context/DarkModeContext";
+import { LinearGradient } from "expo-linear-gradient";
 import logo from "../../../assets/Logo.png";
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("window");
 
-const CustomIcon = ({ path }: { path: string }) => (
+// Íconos inline (SVG)
+const BoxIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path d={path} fill="#fff" />
+    <Path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
+const TransactionIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M15 17h5l-1.405-1.405M13 7h4l-1.405-1.405M6 17h2a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const MegaphoneIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M9 17v-2a4 4 0 014-4h5m-7 6l4 4m0-4l-4 4" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const AdminIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 12c2.28 0 4-1.72 4-4s-1.72-4-4-4-4 1.72-4 4 1.72 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const UserIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 12c2.28 0 4-1.72 4-4s-1.72-4-4-4-4 1.72-4 4 1.72 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const LogoutIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M17 16l4-4m0 0l-4-4m4 4H7" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+// Noticias
 const newsItems = [
   { id: "1", title: "Nueva promoción", description: "20% de descuento en productos seleccionados." },
   { id: "2", title: "Horario extendido", description: "Abrimos hasta las 10 PM." },
   { id: "3", title: "Nuevos productos", description: "Línea de tecnología lanzada." },
 ];
 
-type SectionItem = {
-  title: string;
-  path: string;
-  route: string;
-};
-
-type Section = {
-  title: string;
-  items: SectionItem[];
-};
-
-const Header = ({ darkMode, setDarkMode }: { darkMode: boolean; setDarkMode: (value: boolean) => void }) => {
+const Header = () => {
   const { top } = useSafeAreaInsets();
   const router = useRouter();
+  const { darkMode, setDarkMode } = useDarkMode();
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [notificationsVisible, setNotificationsVisible] = useState(false);
@@ -90,57 +114,40 @@ const Header = ({ darkMode, setDarkMode }: { darkMode: boolean; setDarkMode: (va
     setExpanded((prev) => ({ ...prev, [title]: !prev[title] }));
   };
 
-  const sections: Section[] = [
+  const sections = [
     {
       title: "General",
       items: [
-        {
-          title: "Abrir Caja",
-          path: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4",
-          route: "views/reports",
-        },
-        {
-          title: "Transacciones",
-          path: "M15 17h5l-1.405-1.405M13 7h4l-1.405-1.405M6 17h2a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z",
-          route: "configApp/transactions",
-        },
-        {
-          title: "Anuncios",
-          path: "M9 17v-2a4 4 0 014-4h5m-7 6l4 4m0-4l-4 4",
-          route: "configApp/product-register",
-        },
+        { title: "Reportes", icon: <BoxIcon />, route: "configApp/reports" },
+        { title: "Apertura de Caja", icon: <BoxIcon />, route: "configApp/start-day" },
+        { title: "Transacciones", icon: <TransactionIcon />, route: "configApp/transactions" },
+        { title: "Anuncios", icon: <MegaphoneIcon />, route: "configApp/product-register" },
       ],
     },
     {
       title: "Cuenta",
       items: [
-        {
-          title: "Store",
-          path: "M3 3h18v18H3V3z",
-          route: "views/daily-history",
-        },
-        {
-          title: "Perfil Admin",
-          path: "M12 12c2.28 0 4-1.72 4-4s-1.72-4-4-4-4 1.72-4 4 1.72 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
-          route: "configApp/profile_admin",
-        },
-        {
-          title: "Perfil Usuario",
-          path: "M12 12c2.28 0 4-1.72 4-4s-1.72-4-4-4-4 1.72-4 4 1.72 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
-          route: "configApp/profile_user",
-        },
-        {
-          title: "Cerrar sesión",
-          path: "M17 16l4-4m0 0l-4-4m4 4H7",
-          route: "auth/login",
-        },
+        { title: "Perfil Admin", icon: <AdminIcon />, route: "configApp/profile_admin" },
+        { title: "Perfil Usuario", icon: <UserIcon />, route: "configApp/profile_user" },
+        { title: "Cerrar sesión", icon: <LogoutIcon />, route: "auth/login" },
       ],
     },
   ];
 
   return (
     <View style={{ paddingTop: top }} className="z-10">
-      <View className={`px-4 h-14 flex-row items-center justify-between ${darkMode ? "bg-green-900" : "bg-sky-500"}`}>
+      <LinearGradient
+        colors={darkMode ? ["#0f172a", "#1e293b"] : ["#2563eb", "#1d4ed8"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={{
+          paddingHorizontal: 16,
+          height: 56,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <View className="flex-row items-center gap-3">
           <TouchableOpacity onPress={toggleMenu}>
             <Text className="text-white text-xl">{menuVisible ? "✖️" : "☰"}</Text>
@@ -161,7 +168,7 @@ const Header = ({ darkMode, setDarkMode }: { darkMode: boolean; setDarkMode: (va
             trackColor={{ false: "#767577", true: "#d97706" }}
           />
         </View>
-      </View>
+      </LinearGradient>
 
       {/* Menú lateral */}
       <Animated.View
@@ -172,13 +179,13 @@ const Header = ({ darkMode, setDarkMode }: { darkMode: boolean; setDarkMode: (va
           left: 0,
           width: "70%",
           height: SCREEN_HEIGHT - top,
-          backgroundColor: "#064e3b",
+          backgroundColor: "#1e3a8a",
           paddingHorizontal: 16,
           paddingVertical: 20,
           zIndex: 100,
         }}
       >
-        <Text className="text-gray-300 font-bold text-lg mb-6 border-b border-green-800 pb-2">Menú Principal</Text>
+        <Text className="text-gray-300 font-bold text-lg mb-6 border-b border-blue-400 pb-2">Menú Principal</Text>
         {sections.map((section, idx) => (
           <View key={idx} className="mb-4">
             <TouchableOpacity onPress={() => toggleSection(section.title)} className="flex-row justify-between items-center mb-2">
@@ -195,8 +202,8 @@ const Header = ({ darkMode, setDarkMode }: { darkMode: boolean; setDarkMode: (va
                     closeMenu();
                   }}
                 >
-                  <View className="p-2 rounded-full bg-green-700">
-                    <CustomIcon path={item.path} />
+                  <View className="p-2 rounded-full bg-blue-700">
+                    {item.icon}
                   </View>
                   <Text className="text-gray-300 text-base">{item.title}</Text>
                 </TouchableOpacity>
@@ -211,13 +218,13 @@ const Header = ({ darkMode, setDarkMode }: { darkMode: boolean; setDarkMode: (va
         style={{
           transform: [{ translateX: notifAnim }],
           position: "absolute",
-          top: top + 48,
+          top: top + 60,
           right: 0,
           width: "70%",
           height: SCREEN_HEIGHT - top,
           backgroundColor: "#f0fdf4",
-          padding: 16,
-          zIndex: 100,
+          padding: 20,
+          zIndex: 1000,
         }}
       >
         <View className="flex-row justify-between items-center mb-4">

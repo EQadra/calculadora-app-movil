@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TextInput } from "react-native";
+import { View, Text, TextInput, TextStyle } from "react-native";
 
 type Props = {
   label: string;
@@ -7,6 +7,7 @@ type Props = {
   setValue: (val: string) => void;
   placeholder: string;
   darkMode: boolean;
+  labelStyle?: TextStyle; // 💡 opcional para personalizar el estilo del label
 };
 
 export default function InputField({
@@ -15,10 +16,18 @@ export default function InputField({
   setValue,
   placeholder,
   darkMode,
+  labelStyle,
 }: Props) {
+  const yellowText = "#ffde59"; // 🎨 color amarillo fijo
+
   return (
     <View style={{ marginBottom: 12 }}>
-      <Text style={{ color: darkMode ? "white" : "black", marginBottom: 4 }}>
+      <Text
+        style={[
+          { color: yellowText, marginBottom: 4 },
+          labelStyle, // opcional para sobreescribir si lo necesitas
+        ]}
+      >
         {label}
       </Text>
       <TextInput
@@ -29,7 +38,7 @@ export default function InputField({
         placeholderTextColor={darkMode ? "#ccc" : "#888"}
         style={{
           backgroundColor: darkMode ? "#333" : "white",
-          color: darkMode ? "white" : "black",
+          color: darkMode ? "#fff" : "#000",
           padding: 5,
           borderRadius: 6,
         }}

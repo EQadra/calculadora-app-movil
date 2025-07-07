@@ -1,20 +1,5 @@
-// utils/calculadora.ts
+const TROY_OUNCE_GRAMS = 31.1034768;
 
-export type ValoresEntrada = {
-  pricePerOz: string;
-  exchangeRate: string;
-  purity: string;
-  grams: string;
-  discountPercentage: string;
-};
-
-export type ValoresCalculados = {
-  pricePerGramUSD: number;
-  pricePerGramPEN: number;
-  totalUSD: number;
-  totalPEN: number;
-  valido: boolean;
-};
 
 export const calcularValores = ({
   pricePerOz,
@@ -31,7 +16,10 @@ export const calcularValores = ({
   const g = parse(grams);
   const discount = parse(discountPercentage) / 100;
 
-  if (oz <= 0 || rate <= 0 || pur <= 0) {
+  const canCalculateGrams = g > 0;
+  const canCalculatePrice = oz > 0 && rate > 0 && pur > 0;
+
+  if (!canCalculatePrice) {
     return {
       pricePerGramUSD: 0,
       pricePerGramPEN: 0,
@@ -41,16 +29,16 @@ export const calcularValores = ({
     };
   }
 
-  const pricePerGramUSD = (oz / 31.1035) * pur * (1 - discount);
+  const pricePerGramUSD = (oz / TROY_OUNCE_GRAMS) * pur * (1 - discount);
   const pricePerGramPEN = pricePerGramUSD * rate;
-  const totalUSD = pricePerGramUSD * g;
-  const totalPEN = totalUSD * rate;
+  const totalUSD = canCalculateGrams ? pricePerGramUSD * g : 0;
+  const totalPEN = canCalculateGrams ? pricePerGramPEN * g : 0;
 
   return {
     pricePerGramUSD,
     pricePerGramPEN,
     totalUSD,
     totalPEN,
-    valido: true,
+    valido: true, // ✅ se activa si el precio por gramo puede calcularse
   };
 };
