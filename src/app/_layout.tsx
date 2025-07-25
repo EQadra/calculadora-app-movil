@@ -30,30 +30,27 @@ export default function RootLayout() {
                   </View>
 
                   {/* NAVEGACIÓN */}
-                  <Stack>
-                    {/* Auth */}
-                    <Stack.Screen name="auth/forgot-password" options={{ headerShown: false }} />
-                    <Stack.Screen name="auth/reset-password" options={{ headerShown: false }} />
-                    <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-                    <Stack.Screen name="auth/signup" options={{ headerShown: false }} />
-                    <Stack.Screen name="auth/profile" options={{ headerShown: false }} />
-                    <Stack.Screen name="auth/not-found" options={{ headerShown: false }} />
-                    <Stack.Screen name="auth/recovery-password" options={{ headerShown: false }} />
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="auth/forgot-password" />
+                    <Stack.Screen name="auth/reset-password" />
+                    <Stack.Screen name="auth/login" />
+                    <Stack.Screen name="auth/signup" />
+                    <Stack.Screen name="auth/profile" />
+                    <Stack.Screen name="auth/not-found" />
+                    <Stack.Screen name="auth/recovery-password" />
 
                     {/* Configuración */}
-                    <Stack.Screen name="configApp/profile_admin" options={{ headerShown: false }} />
-                    <Stack.Screen name="configApp/product-register" options={{ headerShown: false }} />
-                    <Stack.Screen name="configApp/profile_user" options={{ headerShown: false }} />
-                    <Stack.Screen name="configApp/transactions" options={{ headerShown: false }} />
-                    <Stack.Screen name="configApp/start-day" options={{ headerShown: false }} />
-                    <Stack.Screen name="configApp/reports" options={{ headerShown: false }} />
-
-
+                    <Stack.Screen name="configApp/profile_admin" />
+                    <Stack.Screen name="configApp/product-register" />
+                    <Stack.Screen name="configApp/profile_user" />
+                    <Stack.Screen name="configApp/transactions" />
+                    <Stack.Screen name="configApp/start-day" />
+                    <Stack.Screen name="configApp/reports" />
 
                     {/* Vistas */}
-                    <Stack.Screen name="views/register-transaction" options={{ headerShown: true }} />
-                    <Stack.Screen name="views/daily-history" options={{ headerShown: false }} />
-                    <Stack.Screen name="views/open-register" options={{ headerShown: false }} />
+                    <Stack.Screen name="views/register-transaction" />
+                    <Stack.Screen name="views/daily-history" />
+                    <Stack.Screen name="views/open-register" />
                   </Stack>
 
                   {/* FOOTER */}

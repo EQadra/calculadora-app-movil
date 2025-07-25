@@ -11,7 +11,7 @@ export default function NotFoundScreen(): JSX.Element {
         className="text-center text-blue-500"
         onPress={() => router.push("/auth/login")}
       >
-        retornar a la página principal
+        Volver a la página principal
       </Text>
     </View>
   );

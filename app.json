@@ -7,7 +7,7 @@
     "userInterfaceStyle": "automatic",
     "orientation": "default",
     "version": "1.0.0",
-    "icon": "./assets/icon.png",       
+    "icon": "./assets/icon.png",
     "android": {
       "package": "com.ecuadra.myapp",
       "versionCode": 1,
@@ -38,6 +38,7 @@
         "origin": "https://n"
       },
       "eas": {
+        "projectId": "1328913e-6e9a-4842-b34d-e7d803b50f1f"
       }
     }
   }

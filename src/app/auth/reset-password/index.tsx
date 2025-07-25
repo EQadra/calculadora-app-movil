@@ -1,68 +1,130 @@
 import React, { useState } from "react";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { View, TextInput, Text, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Switch,
+} from "react-native";
+import { useRouter } from "expo-router";
 import CustomButton from "../../components/CustomButton";
 
-export default function ResetPasswordScreen(): JSX.Element {
-  const [newPassword, setNewPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
+const LoginScreen = () => {
   const router = useRouter();
-  const { email } = useLocalSearchParams<{ email?: string }>();
 
-  const handleResetPassword = (): void => {
-    if (!newPassword || !confirmPassword) {
-      Alert.alert("Error", "Please fill in both password fields.");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberEmail, setRememberEmail] = useState(false);
+
+  const handleLogin = () => {
+    if (!email || !password) {
+      alert("Por favor, ingresa tu correo y contraseña.");
       return;
     }
 
-    if (newPassword !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match.");
-      return;
-    }
-
-    console.log("Resetting password for:", email);
-    console.log("New Password:", newPassword);
-    router.replace("/auth/login"); // Reemplaza la ruta para evitar volver con "atrás"
+    console.log("Iniciando sesión con:", { email, password, rememberEmail });
+    router.push("/views/open-register");
   };
 
   return (
-    <View className="flex-1 justify-center p-5 bg-blue-100">
-      <Text className="text-2xl font-bold text-center mb-5">
-        Reset Password
-      </Text>
-
-      {email && (
-        <Text className="text-center mb-3 text-gray-600">
-          Resetting for: {email}
-        </Text>
-      )}
+    <View style={styles.container}>
+      <Text style={styles.title}>Iniciar Sesión</Text>
 
       <TextInput
-        className="h-10 border border-gray-300 mb-4 px-3 rounded"
-        placeholder="New Password"
-        value={newPassword}
-        onChangeText={setNewPassword}
-        secureTextEntry
+        style={styles.input}
+        placeholder="Correo electrónico"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
         autoCapitalize="none"
       />
 
       <TextInput
-        className="h-10 border border-gray-300 mb-4 px-3 rounded"
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
+        style={styles.input}
+        placeholder="Contraseña"
+        value={password}
+        onChangeText={setPassword}
         secureTextEntry
-        autoCapitalize="none"
       />
 
-      <CustomButton title="Reset Password" onPress={handleResetPassword} />
+      <View style={styles.optionsRow}>
+        {/* Switch + Texto */}
+        <View style={styles.leftOption}>
+          <Switch
+            value={rememberEmail}
+            onValueChange={setRememberEmail}
+            thumbColor={rememberEmail ? "#2563eb" : "#ccc"}
+            trackColor={{ true: "#93c5fd", false: "#ccc" }}
+          />
+          <Text style={styles.rememberText}>Recordar correo</Text>
+        </View>
 
-      <Text
-        className="text-center text-blue-500 mt-4"
-        onPress={() => router.push("/auth/login")}
-      >
-        Back to Login
-      </Text>
+        {/* Olvidaste contraseña */}
+        <TouchableOpacity onPress={() => alert("Redirigir a recuperación...")}>
+          <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+        </TouchableOpacity>
+      </View>
+
+      <CustomButton title="Entrar" onPress={handleLogin} />
+
+      <TouchableOpacity onPress={() => router.push("/auth/signup")}>
+        <Text style={styles.link}>¿No tienes cuenta? Regístrate</Text>
+      </TouchableOpacity>
     </View>
   );
-}
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 24,
+    justifyContent: "center",
+    backgroundColor: "#E0F0FF",
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#003366",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  input: {
+    height: 48,
+    borderColor: "#99CCF3",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 14,
+    backgroundColor: "#F0F8FF",
+    fontSize: 14,
+    color: "#003366",
+  },
+  optionsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  leftOption: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  rememberText: {
+    marginLeft: 8,
+    fontSize: 13,
+    color: "#003366",
+  },
+  forgotText: {
+    fontSize: 13,
+    color: "#1E90FF",
+  },
+  link: {
+    textAlign: "center",
+    marginTop: 18,
+    fontSize: 14,
+    color: "#1E90FF",
+  },
+});
+
+export default LoginScreen;

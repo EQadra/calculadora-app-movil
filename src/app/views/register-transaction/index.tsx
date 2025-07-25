@@ -110,7 +110,7 @@ export default function RegisterTransactionScreen(): JSX.Element {
         </style>
       </head>
       <body>
-        <h1>📟 BMG Electronics</h1>
+        <h1>📟 BMG ORO</h1>
         <div class="center">
           <h2>📍 Av Rafael Escardó 1143</h2>
           <h2>🏙️ San Miguel - Lima</h2>
@@ -152,59 +152,57 @@ export default function RegisterTransactionScreen(): JSX.Element {
 
         <BrandCarousel />
 
-        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }}>
-          {[
-            ["pricePerOz", " onza", "Ej: 1980.45"],
-            ["exchangeRate", "TC USD", "Ej: 3.75"],
-            ["purity", "Ley", "Ej: 0.75"],
-            ["discountPercentage", "%", "Ej: 5"],
-            ["grams", "Gramos", "Ej: 10"], // 👈 en columna
-          ].map(([key, label, placeholder], index) => (
-            <View
-              key={key}
-              style={{
-                width: columnWidth,
-                marginBottom: 2,
-                marginRight: index % 2 === 0 ? 8 : 0,
-              }}
-            >
-              <InputField
-                label={label}
-                value={inputs[key as keyof ValoresEntrada]}
-                setValue={(v) => setValue(key as keyof ValoresEntrada, v)}
-                placeholder={placeholder}
-                darkMode={darkMode}
-                labelStyle={styles.yellowText}
-              />
-            </View>
-          ))}
-        </View>
+        <View style={{}}>
+  {[
+    ["pricePerOz", " onza", "Ej: 1980.45"],
+    ["exchangeRate", "TC USD", "Ej: 3.75"],
+    ["purity", "Ley", "Ej: 0.75"],
+    ["discountPercentage", "%", "Ej: 5"],
+    ["grams", "Gramos", "Ej: 10"],
+  ].map(([key, label, placeholder]) => (
+    <View
+      key={key}
+      style={{
+        marginBottom: 3, // espacio entre campos
+      }}
+    >
+      <InputField
+        label={label}
+        value={inputs[key as keyof ValoresEntrada]}
+        setValue={(v) => setValue(key as keyof ValoresEntrada, v)}
+        placeholder={placeholder}
+        darkMode={darkMode}
+        labelStyle={styles.yellowText}
+      />
+    </View>
+  ))}
+</View>
 
         {valido && (
-          <View style={{ backgroundColor: darkMode ? "#1c2b3a" : "#969292", borderRadius: 5, padding: 16, marginTop: 6 }}>
-            <Text style={[styles.yellowText, { marginBottom: 8 }]}>💲 Precio por gramo (USD): {formatNumber(pricePerGramUSD)}</Text>
-            <Text style={[styles.yellowText, { marginBottom: 8 }]}>🇵🇪 Precio por gramo (PEN): {formatNumber(pricePerGramPEN)}</Text>
+          <View style={{ backgroundColor: darkMode ? "#1c2b3a" : "#969292", borderRadius: 3, padding: 8, marginTop: 3 }}>
+            <Text style={[styles.yellowText, { marginBottom: 3 }]}>💲 Precio por gramo (USD): {formatNumber(pricePerGramUSD)}</Text>
+            <Text style={[styles.yellowText, { marginBottom: 3 }]}>🇵🇪 Precio por gramo (PEN): {formatNumber(pricePerGramPEN)}</Text>
             {Number(inputs.grams) > 0 && (
               <Text style={styles.yellowText}>🧾 Total en PEN: {formatNumber(totalPEN)}</Text>
             )}
           </View>
         )}
 
-        <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 12 }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
           <TouchableOpacity
             onPress={clearAll}
-            style={{ flex: 1, backgroundColor: "#d9534f", paddingVertical: 6, borderRadius: 6, marginRight: 8 }}
+            style={{ flex: 1, backgroundColor: "#d9534f", paddingVertical: 8, borderRadius: 2, marginRight: 8 }}
             disabled={isScanning}
           >
-            <Text style={{ color: "#fff", textAlign: "center", fontSize: 13, fontWeight: "500" }}>Limpiar</Text>
+            <Text style={{ color: "#fff", textAlign: "center", fontSize: 10, fontWeight: "500" }}>Limpiar</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => setShowModal(true)}
-            style={{ flex: 1, backgroundColor: "#0056b3", paddingVertical: 6, borderRadius: 6, marginLeft: 8 }}
+            style={{ flex: 1, backgroundColor: "#0056b3", paddingVertical: 4, borderRadius: 2, marginLeft: 8 }}
             disabled={isScanning}
           >
-            <Text style={{ color: "#fff", textAlign: "center", fontSize: 13, fontWeight: "500" }}>Ver Recibo</Text>
+            <Text style={{ color: "#fff", textAlign: "center", fontSize: 10, fontWeight: "500" }}>Ver Recibo</Text>
           </TouchableOpacity>
         </View>
 
@@ -220,7 +218,7 @@ export default function RegisterTransactionScreen(): JSX.Element {
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: darkMode ? "#1c2b3a" : "#1D4ED8" }]}>
             <Text style={[styles.modalTitle, styles.yellowText]}>Recibo</Text>
-            {["BMG Electronics", "Av Rafael Escardó 1143, San Miguel", "Número de Contacto: 912 184 269"].map((text, i) => (
+            {["BMG ORO", "Av Rafael Escardó 1143, San Miguel", "Número de Contacto: 912 184 269"].map((text, i) => (
               <Text key={i} style={[styles.modalSubText, styles.yellowText]}>{text}</Text>
             ))}
 

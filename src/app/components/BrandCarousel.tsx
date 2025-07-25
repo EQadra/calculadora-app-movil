@@ -1,9 +1,22 @@
-import React, { useRef, useEffect } from "react";
-import { ScrollView, Image, View, StyleSheet } from "react-native";
+import React, { useRef, useEffect, useState } from "react";
+import {
+  ScrollView,
+  Image,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  Dimensions,
+  Text,
+} from "react-native";
 
 export default function BrandCarousel(): JSX.Element {
   const scrollRef = useRef<ScrollView>(null);
   const scrollX = useRef(0);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const brandImages = [
     "https://picsum.photos/seed/1/100",
@@ -32,6 +45,16 @@ export default function BrandCarousel(): JSX.Element {
     return () => clearInterval(interval);
   }, []);
 
+  const openImageModal = (uri: string) => {
+    setSelectedImage(uri);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedImage(null);
+  };
+
   return (
     <View style={{ marginBottom: 16 }}>
       <ScrollView
@@ -41,12 +64,35 @@ export default function BrandCarousel(): JSX.Element {
         scrollEnabled={false}
       >
         {brandImages.map((uri, index) => (
-          <Image key={index} source={{ uri }} style={styles.image} />
+          <TouchableOpacity key={index} onPress={() => openImageModal(uri)}>
+            <Image source={{ uri }} style={styles.image} />
+          </TouchableOpacity>
         ))}
       </ScrollView>
+
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeModal}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+            <Text style={styles.closeButtonText}>✕</Text>
+          </TouchableOpacity>
+
+          <View style={styles.modalContent}>
+            {selectedImage && (
+              <Image source={{ uri: selectedImage }} style={styles.fullImage} />
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
+
+const { width, height } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   image: {
@@ -54,5 +100,35 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 1,
     marginRight: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    maxWidth: width * 0.9,
+    maxHeight: height * 0.9,
+  },
+  fullImage: {
+    width: width * 0.8,
+    height: width * 0.8,
+    resizeMode: "contain",
+    borderRadius: 8,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    backgroundColor: "#ffffff33",
+    borderRadius: 20,
+    padding: 10,
+    zIndex: 10,
+  },
+  closeButtonText: {
+    fontSize: 20,
+    color: "#fff",
+    fontWeight: "bold",
   },
 });

@@ -15,7 +15,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useDarkMode } from "../../context/DarkModeContext";
 import { LinearGradient } from "expo-linear-gradient";
-import logo from "../../../assets/Logo.png";
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -152,8 +151,7 @@ const Header = () => {
           <TouchableOpacity onPress={toggleMenu}>
             <Text className="text-white text-xl">{menuVisible ? "✖️" : "☰"}</Text>
           </TouchableOpacity>
-          <Image source={logo} style={{ width: 24, height: 24 }} />
-          <Text className="text-white font-bold text-sm">BMG Electronics</Text>
+          <Text className="text-white font-bold text-sm">BMG ORO</Text>
         </View>
 
         <View className="flex-row items-center gap-4">
@@ -175,10 +173,10 @@ const Header = () => {
         style={{
           transform: [{ translateX: slideAnim }],
           position: "absolute",
-          top: top + 48,
+          top: top + 55,
           left: 0,
           width: "70%",
-          height: SCREEN_HEIGHT - top,
+          height: SCREEN_HEIGHT - top -63,
           backgroundColor: "#1e3a8a",
           paddingHorizontal: 16,
           paddingVertical: 20,
@@ -213,14 +211,14 @@ const Header = () => {
         <Text className="text-center text-gray-400 text-sm mt-6">Versión 1.0.0</Text>
       </Animated.View>
 
-      {/* Panel de notificaciones */}
+      {/* Panel de notificaciones modificar aqui el ancho del aside */}
       <Animated.View
         style={{
           transform: [{ translateX: notifAnim }],
           position: "absolute",
           top: top + 60,
           right: 0,
-          width: "70%",
+          width: "50%",
           height: SCREEN_HEIGHT - top,
           backgroundColor: "#f0fdf4",
           padding: 20,

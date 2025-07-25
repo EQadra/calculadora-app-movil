@@ -4,8 +4,8 @@ import { View, TextInput, Text, Button } from "react-native";
 import { useAuth } from "../../../context/AuthProvider";
 
 export default function LoginScreen(): JSX.Element {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const [correo, setCorreo] = useState<string>("");
+  const [contrasena, setContrasena] = useState<string>("");
   const router = useRouter();
   const { login } = useAuth();
 
@@ -13,27 +13,27 @@ export default function LoginScreen(): JSX.Element {
     selectedCountry?: string;
   }>();
 
-  const handleLogin = async (): Promise<void> => {
+  const manejarInicioSesion = async (): Promise<void> => {
     try {
-      await login(email, password);
+      await login(correo, contrasena);
       router.push("/views/register-transaction");
     } catch (error) {
-      console.error("Error en login:", error);
+      console.error("Error al iniciar sesión:", error);
     }
   };
 
   return (
-    <View className="flex-1 justify-start p-5 bg-blue-100" style={{ paddingTop: 80 }}>
+    <View className="flex-1 justify-center p-5 bg-blue-100">
       <Text className="text-3xl font-bold text-center mb-9 text-blue-700">
-        BMG ELECTRONICS SYSTEM
+        BMG ORO
       </Text>
 
       <TextInput
         className="h-12 border border-blue-300 mb-4 px-4 py-2 rounded bg-blue-50 text-blue-800"
         placeholder="Correo electrónico"
         placeholderTextColor="#5A9BD5"
-        value={email}
-        onChangeText={setEmail}
+        value={correo}
+        onChangeText={setCorreo}
         keyboardType="email-address"
         autoCapitalize="none"
       />
@@ -41,16 +41,12 @@ export default function LoginScreen(): JSX.Element {
         className="h-12 border border-blue-300 mb-4 px-4 py-2 rounded bg-blue-50 text-blue-800"
         placeholder="Contraseña"
         placeholderTextColor="#5A9BD5"
-        value={password}
-        onChangeText={setPassword}
+        value={contrasena}
+        onChangeText={setContrasena}
         secureTextEntry
       />
       <View className="mb-4">
-        <Button
-          title="Ingresar"
-          color="#1E90FF"
-          onPress={handleLogin}
-        />
+        <Button title="Iniciar sesión" color="#1E90FF" onPress={manejarInicioSesion} />
       </View>
 
       {selectedCountry && (

@@ -3,17 +3,17 @@ import { View, TextInput, Text, Button, Alert, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 
 export default function ForgotPasswordScreen(): JSX.Element {
-  const [email, setEmail] = useState<string>("");
+  const [correo, setCorreo] = useState<string>("");
   const router = useRouter();
 
-  const handlePasswordRecovery = async (): Promise<void> => {
+  const manejarRecuperacionContrasena = async (): Promise<void> => {
     try {
-      if (!email) {
+      if (!correo) {
         Alert.alert("Error", "Por favor ingresa tu correo electrónico.");
         return;
       }
 
-      Alert.alert("Éxito", `Se ha enviado un enlace de recuperación a ${email}.`);
+      Alert.alert("Éxito", `Se ha enviado un enlace de recuperación a ${correo}.`);
       router.push("/auth/login");
     } catch (error) {
       console.error("Error al enviar el correo de recuperación:", error);
@@ -22,43 +22,46 @@ export default function ForgotPasswordScreen(): JSX.Element {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Recuperar Contraseña</Text>
+    <View style={estilos.contenedor}>
+      <Text style={estilos.titulo}>Recuperar contraseña</Text>
 
       <TextInput
-        style={styles.input}
+        style={estilos.entrada}
         placeholder="Ingresa tu correo electrónico"
-        value={email}
-        onChangeText={setEmail}
+        value={correo}
+        onChangeText={setCorreo}
         keyboardType="email-address"
         autoCapitalize="none"
         placeholderTextColor="#5A7FA0"
       />
 
-      <Button title="Enviar correo de recuperación" onPress={handlePasswordRecovery} />
+      <Button
+        title="Enviar correo de recuperación"
+        onPress={manejarRecuperacionContrasena}
+      />
 
-      <Text style={styles.link} onPress={() => router.push("/auth/login")}>
+      <Text style={estilos.enlace} onPress={() => router.push("/auth/login")}>
         Volver al inicio de sesión
       </Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+const estilos = StyleSheet.create({
+  contenedor: {
     flex: 1,
     justifyContent: "center",
     padding: 20,
-    backgroundColor: "#E0F0FF", // Azul claro de fondo
+    backgroundColor: "#E0F0FF", // Fondo azul claro
   },
-  title: {
+  titulo: {
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 20,
     color: "#003366", // Azul oscuro
   },
-  input: {
+  entrada: {
     height: 50,
     borderColor: "#99CCF3", // Borde azul suave
     borderWidth: 1,
@@ -68,7 +71,7 @@ const styles = StyleSheet.create({
     color: "#003366",
     marginBottom: 15,
   },
-  link: {
+  enlace: {
     textAlign: "center",
     color: "#1E90FF", // Azul brillante
     marginTop: 20,
